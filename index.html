@@ -691,6 +691,7 @@ function renderRefGroups() {
       '</div>'+
       '<div class="ref-group-name">'+esc(g.name)+'</div>'+
       (g.desc?'<div style="font-size:10px;color:var(--secondary);margin-top:2px">'+esc(g.desc)+'</div>':'')+
+      '<div style="font-size:10px;color:var(--label);margin-top:4px">Schools: '+esc(schoolApplicabilityLabel(g))+'</div>'+
       '<div class="ref-group-count">'+(countByPrefix[pfx]||0)+' topics</div>'+
     '</div>';
   }).join('');
@@ -698,7 +699,7 @@ function renderRefGroups() {
 
 function openAddGroupModal() {
   const mc = document.getElementById('modal-container');
-  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:440px">'+
+  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:480px">'+
     '<h2>Add Topic Group</h2>'+
     '<label>Prefix (e.g. STEM, PBL)</label>'+
     '<input id="g-pfx" placeholder="e.g. STEM" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">'+
@@ -706,6 +707,7 @@ function openAddGroupModal() {
     '<label>Group Name</label><input id="g-name" placeholder="e.g. STEM Integrated">'+
     '<label>PD Format</label>'+
     '<select id="g-fmt"><option value="live">Live All-School</option><option value="subject">Subject Live</option><option value="async">Async</option></select>'+
+    '<label>Applicable Schools</label>'+groupSchoolChecksHtml({appliesTo:['All Schools']})+
     '<label>Description (optional)</label><textarea id="g-desc" style="min-height:50px"></textarea>'+
     '<div class="modal-actions">'+
       '<button class="btn" onclick="closeModal()">Cancel</button>'+
@@ -716,6 +718,42 @@ function getMatchedGroupPrefix(topicId) {
   const sorted = Object.keys(topicGroups).sort((a,b)=>b.length-a.length);
   for (const pfx of sorted) if (topicId.startsWith(pfx)) return pfx;
   return null;
+}
+
+const SCHOOL_TAG_OPTIONS = ['Lower','Middle','High'];
+function normalizeGroupSchools(g) {
+  const raw = Array.isArray(g && g.appliesTo) ? g.appliesTo : ['All Schools'];
+  if (raw.includes('All Schools')) return ['All Schools'];
+  const cleaned = raw.filter(x => SCHOOL_TAG_OPTIONS.includes(x));
+  return cleaned.length ? cleaned : ['All Schools'];
+}
+function schoolApplicabilityLabel(g) {
+  const vals = normalizeGroupSchools(g);
+  return vals.includes('All Schools') ? 'All Schools' : vals.join(' + ');
+}
+function topicSchoolTags(topicId) {
+  const pfx = getMatchedGroupPrefix(topicId);
+  return normalizeGroupSchools(pfx ? topicGroups[pfx] : null);
+}
+function topicMatchesSchoolFilter(topicId, filter) {
+  if (!filter || filter === 'all') return true;
+  const vals = topicSchoolTags(topicId);
+  if (filter === 'All Schools') return vals.includes('All Schools');
+  return vals.includes('All Schools') || vals.includes(filter);
+}
+function groupSchoolChecksHtml(g) {
+  const vals = normalizeGroupSchools(g);
+  const isAll = vals.includes('All Schools');
+  const cbStyle = 'display:inline-flex;align-items:center;gap:4px;margin-right:10px;margin-top:5px;font-size:11px;color:var(--muted)';
+  return '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:3px">'+
+    '<label style="'+cbStyle+'"><input type="checkbox" class="g-school" value="All Schools" '+(isAll?'checked':'')+'> All Schools</label>'+
+    SCHOOL_TAG_OPTIONS.map(v=>'<label style="'+cbStyle+'"><input type="checkbox" class="g-school" value="'+v+'" '+(!isAll&&vals.includes(v)?'checked':'')+'> '+v+'</label>').join('')+
+    '</div><div style="font-size:10px;color:var(--secondary);line-height:1.4;margin-top:4px">Use All Schools for groups such as AS. For groups that only apply to certain divisions, choose one or more specific schools.</div>';
+}
+function readGroupSchools() {
+  const picked = Array.from(document.querySelectorAll('.g-school:checked')).map(cb=>cb.value);
+  if (!picked.length || picked.includes('All Schools')) return ['All Schools'];
+  return picked.filter(x => SCHOOL_TAG_OPTIONS.includes(x));
 }
 function openEditGroupModal(pfx) {
   const g = topicGroups[pfx]; if (!g) return;
@@ -732,6 +770,7 @@ function openEditGroupModal(pfx) {
     '<select id="g-fmt">'+
       ['live','subject','async'].map(f=>'<option value="'+f+'"'+(g.fmt===f?' selected':'')+'>'+fmtLabel(f)+'</option>').join('')+
     '</select>'+
+    '<label>Applicable Schools</label>'+groupSchoolChecksHtml(g)+
     '<label>Description</label><textarea id="g-desc" style="min-height:50px">'+esc(g.desc||'')+'</textarea>'+
     '<div class="modal-actions">'+
       '<button class="btn" onclick="closeModal()">Cancel</button>'+
@@ -745,6 +784,7 @@ function saveGroup(editPfx) {
   const name = document.getElementById('g-name').value.trim();
   const fmt = document.getElementById('g-fmt').value;
   const desc = document.getElementById('g-desc').value.trim();
+  const appliesTo = readGroupSchools();
   const errEl = document.getElementById('g-pfx-err');
   const showErr = msg => { if (errEl) errEl.textContent = msg; };
   if (!pfx) { showErr('Prefix is required.'); return; }
@@ -775,7 +815,7 @@ function saveGroup(editPfx) {
     delete topicGroups[editPfx];
   }
 
-  topicGroups[pfx] = {name, fmt, desc};
+  topicGroups[pfx] = {name, fmt, desc, appliesTo};
   closeModal(); renderRefGroups(); render(); saveAllData();
 }
 function deleteGroup(pfx) {
@@ -790,8 +830,8 @@ function deleteGroup(pfx) {
 let currentTab = 'schedule';
 let schFilter = {school:'all', quarter:'all'};
 let kbFilter = {school:'all'};
-let catSearch = '', catIdSearch = '', catLean = 'all';
-let poolFmt = 'all';
+let catSearch = '', catIdSearch = '', catLean = 'all', catSchool = 'all';
+let poolFmt = 'all', poolSchool = 'all';
 let evSearch = '';
 
 const VALID_TABS = ['schedule','kanban','catalogue','evidence'];
@@ -857,7 +897,7 @@ function renderSchedule(c) {
   if (schFilter.quarter==='Q2'||schFilter.quarter==='Q3'||schFilter.quarter==='Q4') cols = ['Lower','Middle','High'];
   if (schFilter.school!=='all') cols = [schFilter.school].filter(x=>x);
 
-  const allIds = Object.keys(topics).sort();
+  const allIds = Object.keys(topics).sort(topicIdCompare);
   const weeks = {};
   schedule.forEach((s,i)=>{if(!weeks[s.week])weeks[s.week]={week:s.week,date:s.date,entries:[]};weeks[s.week].entries.push({...s,_idx:i})});
   const wkNums = Object.keys(weeks).map(Number).sort((a,b)=>a-b);
@@ -880,6 +920,9 @@ function renderSchedule(c) {
     <select id="sch-q" onchange="schFilter.quarter=this.value;render()">
       <option value="all">All Quarters</option><option value="Q1">Q1 (Wk 1–9)</option><option value="Q2">Q2 (Wk 10–17)</option><option value="Q3">Q3 (Wk 18–27)</option><option value="Q4">Q4 (Wk 28–36)</option>
     </select>
+    <select id="pool-school" onchange="poolSchool=this.value;render()">
+      <option value="all">Topic Pool: Any School Tag</option><option value="Lower">Lower Topics</option><option value="Middle">Middle Topics</option><option value="High">High Topics</option><option value="All Schools">All-School Topics Only</option>
+    </select>
   </div>
   <div class="topic-pool">
     <div class="pool-hdr">
@@ -895,7 +938,7 @@ function renderSchedule(c) {
     <div class="pool-body" id="pool-body">`;
   allIds.forEach(id => {
     const fmt = topicFmt(id);
-    if (poolFmt==='all'||poolFmt===fmt) h += topicTagHtml(id, true);
+    if ((poolFmt==='all'||poolFmt===fmt) && topicMatchesSchoolFilter(id, poolSchool)) h += topicTagHtml(id, true);
   });
   h += `</div></div>`;
 
@@ -955,13 +998,14 @@ function renderSchedule(c) {
   c.innerHTML = h;
   document.getElementById('sch-school').value = schFilter.school;
   document.getElementById('sch-q').value = schFilter.quarter;
+  document.getElementById('pool-school').value = poolSchool;
   setupDrag();
 }
 
 function filterPool(v){
   const b=document.getElementById('pool-body');if(!b)return;
   const lv=v.toLowerCase();
-  b.querySelectorAll('.topic-tag').forEach(tag=>{const id=tag.dataset.id;const t=topics[id];tag.style.display=(!lv||id.toLowerCase().includes(lv)||(t&&t.title.toLowerCase().includes(lv)))?'':'none'});
+  b.querySelectorAll('.topic-tag').forEach(tag=>{const id=tag.dataset.id;const t=topics[id];const title=(t&&t.title?t.title:'').toLowerCase();tag.style.display=(!lv||id.toLowerCase().includes(lv)||title.includes(lv))?'':'none'});
 }
 
 // ════════════════════════════════
@@ -1341,6 +1385,7 @@ function getFilteredCatalogueIds() {
   if (catIdSearch){const s=catIdSearch.toLowerCase();filtered=filtered.filter(id=>id.toLowerCase().includes(s))}
   if (catSearch){const s=catSearch.toLowerCase();filtered=filtered.filter(id=>{const t=topics[id];return (t.title||'').toLowerCase().includes(s)||(t.description||'').toLowerCase().includes(s)||(t.outcomes||'').toLowerCase().includes(s)||(t.evidence||'').toLowerCase().includes(s)})}
   if (catLean!=='all') filtered=filtered.filter(id=>topics[id].lean===catLean);
+  if (catSchool!=='all') filtered=filtered.filter(id=>topicMatchesSchoolFilter(id, catSchool));
   return filtered;
 }
 function renderCatalogueRows() {
@@ -1359,6 +1404,7 @@ function renderCatalogueRows() {
       '<td class="tid" onclick="openTopicModal(\''+id+'\')" onmouseenter="showTT(event,\''+id+'\')" onmouseleave="hideTT()">'+id+'</td>'+
       '<td style="color:var(--white);font-weight:500;min-width:180px">'+esc(t.title)+'</td>'+
       '<td><span class="lean-badge '+t.lean+'">'+t.lean+'</span></td>'+
+      '<td style="font-size:10px;color:var(--label);white-space:nowrap">'+esc(topicSchoolTags(id).join(' + '))+'</td>'+
       '<td class="cell-text">'+esc(t.description||'—')+'</td>'+
       '<td class="cell-text">'+esc(t.outcomes||'—')+'</td>'+
       '<td class="cell-ev">'+esc(t.evidence||'—')+'</td>'+
@@ -1378,16 +1424,24 @@ function renderCatalogue(c) {
       '<option value="Pedagogical"'+(catLean==='Pedagogical'?' selected':'')+'>Pedagogical</option>'+
       '<option value="Blended"'+(catLean==='Blended'?' selected':'')+'>Blended</option>'+
     '</select>'+
+    '<select id="cat-school-filter" style="padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+      '<option value="all"'+(catSchool==='all'?' selected':'')+'>Any School Tag</option>'+
+      '<option value="Lower"'+(catSchool==='Lower'?' selected':'')+'>Lower</option>'+
+      '<option value="Middle"'+(catSchool==='Middle'?' selected':'')+'>Middle</option>'+
+      '<option value="High"'+(catSchool==='High'?' selected':'')+'>High</option>'+
+      '<option value="All Schools"'+(catSchool==='All Schools'?' selected':'')+'>All Schools Only</option>'+
+    '</select>'+
     '<span id="cat-count" style="font-size:11px;color:var(--secondary)"></span>'+
   '</div>';
 
   h += '<div style="overflow-x:auto"><table class="cat-table"><thead><tr>'+
-    '<th>ID</th><th>Title</th><th>Lean</th><th>Description</th><th>Learning Outcomes</th><th>Evidence Base</th><th>Assigned</th><th></th>'+
+    '<th>ID</th><th>Title</th><th>Lean</th><th>Schools</th><th>Description</th><th>Learning Outcomes</th><th>Evidence Base</th><th>Assigned</th><th></th>'+
     '</tr></thead><tbody id="cat-table-body"></tbody></table></div>';
   c.innerHTML = h;
   document.getElementById('cat-id-filter').addEventListener('input', e=>{catIdSearch=e.target.value;renderCatalogueRows();});
   document.getElementById('cat-text-filter').addEventListener('input', e=>{catSearch=e.target.value;renderCatalogueRows();});
   document.getElementById('cat-lean-filter').addEventListener('change', e=>{catLean=e.target.value;renderCatalogueRows();});
+  document.getElementById('cat-school-filter').addEventListener('change', e=>{catSchool=e.target.value;renderCatalogueRows();});
   renderCatalogueRows();
 }
 
