@@ -308,11 +308,11 @@ db.settings({ experimentalForceLongPolling: true });
 const stateRef = db.collection('pdCommandCenter').doc('main');
 
 // Optional Microsoft settings:
-// - Leave MICROSOFT_TENANT as 'common' to allow any Microsoft account allowed by your Firebase provider setup.
-// - To restrict sign-in to one Azure/Microsoft Entra tenant, change this to your tenant ID or tenant domain.
+// - This is restricted to the OptimaEd Azure/Microsoft Entra tenant.
+// - If you ever need to allow multiple tenants, change this value and your Azure app registration settings together.
 //   Example: 'contoso.onmicrosoft.com' or '00000000-0000-0000-0000-000000000000'
 // - ALLOWED_EMAIL_DOMAINS is a convenience check in the page, not a replacement for Firestore Security Rules.
-const MICROSOFT_TENANT = 'common';
+const MICROSOFT_TENANT = 'c7b2fe95-5305-4143-a425-262bd0ed6d5e';
 const ALLOWED_EMAIL_DOMAINS = []; // Example: ['optimaed.com']
 
 let isApplyingRemoteState = false;
