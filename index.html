@@ -706,13 +706,21 @@ function openAddGroupModal() {
       '<button class="btn btn-primary" onclick="saveGroup(null)">Add Group</button>'+
     '</div></div></div>';
 }
+function getMatchedGroupPrefix(topicId) {
+  const sorted = Object.keys(topicGroups).sort((a,b)=>b.length-a.length);
+  for (const pfx of sorted) if (topicId.startsWith(pfx)) return pfx;
+  return null;
+}
 function openEditGroupModal(pfx) {
   const g = topicGroups[pfx]; if (!g) return;
+  const matchingTopicCount = Object.keys(topics).filter(id => getMatchedGroupPrefix(id) === pfx).length;
   const mc = document.getElementById('modal-container');
-  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:440px">'+
+  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:480px">'+
     '<h2>Edit Group: '+pfx+'</h2>'+
-    '<label>Prefix (read-only)</label>'+
-    '<input value="'+esc(pfx)+'" readonly style="opacity:.6">'+
+    '<label>Prefix</label>'+
+    '<input id="g-pfx" value="'+esc(pfx)+'" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">'+
+    '<div id="g-pfx-err" style="color:#e74c3c;font-size:10px;min-height:14px;margin-top:2px"></div>'+
+    '<div style="font-size:10px;color:var(--secondary);line-height:1.4;margin:2px 0 8px">Changing this prefix will automatically rename '+matchingTopicCount+' matching topic IDs and update every scheduled slot that uses them.</div>'+
     '<label>Group Name</label><input id="g-name" value="'+esc(g.name)+'">'+
     '<label>PD Format</label>'+
     '<select id="g-fmt">'+
@@ -721,23 +729,51 @@ function openEditGroupModal(pfx) {
     '<label>Description</label><textarea id="g-desc" style="min-height:50px">'+esc(g.desc||'')+'</textarea>'+
     '<div class="modal-actions">'+
       '<button class="btn" onclick="closeModal()">Cancel</button>'+
-      '<button class="btn btn-danger" onclick="deleteGroup(\''+pfx+'\')">Delete Group</button>'+
+      '<button class="btn btn-danger" onclick="deleteGroup(\''+pfx+'\')">Delete Group Only</button>'+
       '<button class="btn btn-primary" onclick="saveGroup(\''+pfx+'\')">Save</button>'+
     '</div></div></div>';
 }
 function saveGroup(editPfx) {
-  const pfx = editPfx || document.getElementById('g-pfx').value.trim().toUpperCase();
+  const pfxInput = document.getElementById('g-pfx');
+  const pfx = (pfxInput ? pfxInput.value : editPfx || '').trim().toUpperCase();
   const name = document.getElementById('g-name').value.trim();
   const fmt = document.getElementById('g-fmt').value;
   const desc = document.getElementById('g-desc').value.trim();
-  if (!pfx) { document.getElementById('g-pfx-err').textContent = 'Prefix is required.'; return; }
-  if (!editPfx && topicGroups[pfx]) { document.getElementById('g-pfx-err').textContent = 'That prefix is already taken.'; return; }
+  const errEl = document.getElementById('g-pfx-err');
+  const showErr = msg => { if (errEl) errEl.textContent = msg; };
+  if (!pfx) { showErr('Prefix is required.'); return; }
+  if (!/^[A-Z0-9-]+$/.test(pfx)) { showErr('Use only letters, numbers, and hyphens.'); return; }
   if (!name) return;
+  if (!editPfx && topicGroups[pfx]) { showErr('That prefix is already taken.'); return; }
+  if (editPfx && pfx !== editPfx && topicGroups[pfx]) { showErr('That prefix is already taken.'); return; }
+
+  if (editPfx && pfx !== editPfx) {
+    const idsToRename = Object.keys(topics).filter(id => getMatchedGroupPrefix(id) === editPfx);
+    const renameMap = {};
+    for (const oldId of idsToRename) {
+      const newId = pfx + oldId.slice(editPfx.length);
+      if (topics[newId] && !idsToRename.includes(newId)) {
+        showErr('Cannot rename because topic ID '+newId+' already exists.');
+        return;
+      }
+      renameMap[oldId] = newId;
+    }
+    idsToRename.forEach(oldId => {
+      const newId = renameMap[oldId];
+      topics[newId] = {...topics[oldId], id:newId};
+      delete topics[oldId];
+    });
+    schedule.forEach(s => {
+      if (s.topicIds) s.topicIds = s.topicIds.map(id => renameMap[id] || id);
+    });
+    delete topicGroups[editPfx];
+  }
+
   topicGroups[pfx] = {name, fmt, desc};
   closeModal(); renderRefGroups(); render(); saveAllData();
 }
 function deleteGroup(pfx) {
-  if (!confirm('Delete group "'+pfx+'"? Topics with this prefix will stay but lose their group assignment.')) return;
+  if (!confirm('Delete group "'+pfx+'"? This removes only the group label/key. It does not delete the topics. To delete a topic, open that topic and use its Delete button.')) return;
   delete topicGroups[pfx];
   closeModal(); renderRefGroups(); render(); saveAllData();
 }
