@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OptimaEd PD Command Center — 2026–27</title>
+<style>
+:root {
+  --navy:#06385D;--navy-deep:#042740;--navy-mid:#0a4a78;
+  --cyan:#52C9E7;--cyan-dim:#3a9ab5;--cyan-glow:rgba(82,201,231,0.15);
+  --white:#FFFFFF;--muted:#A8CAD9;--label:#B5D0E0;--secondary:#5A8BA8;
+  --surface:#083a5e;--surface-hover:#0b4d7a;
+  --card:rgba(255,255,255,0.06);--card-border:rgba(255,255,255,0.1);
+  --font:'Calibri','Segoe UI',system-ui,sans-serif;--radius:6px;--radius-lg:10px;
+  --fmt-live:#5B9BD5;--fmt-subject:#70AD47;--fmt-async:#BF8CD6;
+  --fmt-newt:#F4B942;--fmt-k2ob:#ED7D6A;--fmt-special:#FFD966;--fmt-nopd:#7f8c8d;
+  --stage-planning:#e74c3c;--stage-inbuild:#e67e22;--stage-review:#f1c40f;
+  --stage-ready:#82c91e;--stage-delivered:#3498db;
+  --ref-width:280px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy-deep);color:var(--white);min-height:100vh}
+button{font-family:var(--font);cursor:pointer}
+input,textarea,select{font-family:var(--font)}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:var(--navy-deep)}
+::-webkit-scrollbar-thumb{background:var(--secondary);border-radius:4px}
+
+/* ── App shell: side-by-side ref panel + main ── */
+#app-shell{display:flex;min-height:100vh;transition:all .25s}
+#main-shell{flex:1;min-width:0;display:flex;flex-direction:column;transition:all .25s}
+
+/* ── Reference Panel ── */
+#ref-panel{
+  width:0;overflow:hidden;background:var(--navy);border-right:1px solid var(--card-border);
+  transition:width .25s;flex-shrink:0;display:flex;flex-direction:column;
+}
+#ref-panel.open{width:var(--ref-width)}
+#ref-panel-inner{width:var(--ref-width);padding:16px;overflow-y:auto;flex:1}
+#ref-panel h3{color:var(--cyan);font-size:13px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.ref-group{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:6px}
+.ref-group-prefix{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:2px;display:flex;justify-content:space-between;align-items:center}
+.ref-group-name{font-size:11px;color:var(--muted)}
+.ref-group-fmt{font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:6px}
+.ref-group-count{font-size:9px;color:var(--secondary);margin-top:2px}
+
+/* ── Header ── */
+.header{background:linear-gradient(135deg,var(--navy-deep),var(--navy));border-bottom:1px solid var(--card-border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-logo{width:34px;height:34px;background:var(--white);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.header h1{font-size:16px;font-weight:700;color:var(--cyan)}
+.header h1 span{color:var(--white);font-weight:400}
+.header-actions{display:flex;gap:8px}
+
+.nav{display:flex;background:var(--navy);border-bottom:1px solid var(--card-border);padding:0 24px;overflow-x:auto;flex-shrink:0}
+.nav-tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--secondary);background:none;border:none;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.nav-tab:hover{color:var(--muted)}
+.nav-tab.active{color:var(--cyan);border-bottom-color:var(--cyan);font-weight:600}
+.nav-tab .badge{font-size:10px;background:rgba(82,201,231,0.2);color:var(--cyan);padding:1px 6px;border-radius:10px;margin-left:5px}
+
+.main{padding:18px 24px;flex:1;overflow-y:auto}
+
+/* ── Buttons ── */
+.btn{padding:6px 13px;border-radius:var(--radius);font-size:12px;font-weight:500;border:1px solid var(--card-border);background:var(--surface);color:var(--white);display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--surface-hover)}
+.btn-primary{background:var(--cyan);color:var(--navy-deep);border-color:var(--cyan);font-weight:600}
+.btn-primary:hover{opacity:.9}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn-danger{color:#e74c3c;border-color:#e74c3c}
+.btn-danger:hover{background:rgba(231,76,60,.15)}
+.btn-ref{background:rgba(82,201,231,0.1);color:var(--cyan);border-color:rgba(82,201,231,0.3);font-size:11px;padding:5px 10px}
+.btn-ref.active{background:rgba(82,201,231,0.2);border-color:var(--cyan)}
+
+/* ── Badges ── */
+.lean-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600}
+.lean-badge.Technical{background:rgba(82,201,231,0.2);color:var(--cyan)}
+.lean-badge.Pedagogical{background:rgba(46,204,113,0.2);color:#2ecc71}
+.lean-badge.Blended{background:rgba(243,156,18,0.2);color:#f5b041}
+.fmt-pill{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600}
+
+/* ── Topic tags ── */
+.topic-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;border:1px solid transparent}
+.topic-tag:hover{filter:brightness(1.3)}
+.topic-tag.dragging{opacity:.4}
+.topic-tag.fmt-live{background:rgba(91,155,213,0.2);color:var(--fmt-live);border-color:rgba(91,155,213,0.3)}
+.topic-tag.fmt-subject{background:rgba(112,173,71,0.2);color:var(--fmt-subject);border-color:rgba(112,173,71,0.3)}
+.topic-tag.fmt-async{background:rgba(191,140,214,0.2);color:var(--fmt-async);border-color:rgba(191,140,214,0.3)}
+
+/* ── Stage dots ── */
+.stage-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.stage-dot.Planning{background:var(--stage-planning)}
+.stage-dot.In-Build{background:var(--stage-inbuild)}
+.stage-dot.Review{background:var(--stage-review)}
+.stage-dot.Ready{background:var(--stage-ready)}
+.stage-dot.Delivered{background:var(--stage-delivered)}
+.stage-dot.Unassigned{background:var(--secondary)}
+
+/* ── Tooltip ── */
+.tooltip-popup{position:fixed;z-index:9999;background:var(--navy);border:1px solid var(--cyan);border-radius:var(--radius-lg);padding:14px 16px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:none;font-size:12px;line-height:1.5}
+.tt-id{color:var(--cyan);font-weight:700;font-size:11px;margin-bottom:2px}
+.tt-title{color:var(--white);font-weight:600;font-size:13px;margin-bottom:6px}
+.tt-desc{color:var(--muted);margin-bottom:4px}
+
+/* ── Schedule ── */
+.ctrl-row{display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.ctrl-row select,.ctrl-row input{padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px}
+.week-label{background:var(--navy);padding:6px 8px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:10px}
+.week-label .wn{font-weight:700;color:var(--cyan);font-size:13px}
+.week-label .wd{color:var(--secondary);font-size:9px}
+.school-col{background:var(--card);padding:5px 7px;min-height:44px;border:1px solid transparent;transition:background .15s,border .15s}
+.school-col.drag-over{background:var(--cyan-glow)!important;border-color:var(--cyan)!important}
+.stype-lbl{font-size:9px;margin-bottom:2px;font-weight:600}
+.slot-content{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.empty-slot{color:var(--secondary);font-size:10px;font-style:italic;opacity:.4}
+.special-row{padding:8px 14px;font-size:12px;font-weight:600;text-align:center;border-radius:4px;margin:2px 0}
+.slot-remove{display:none;cursor:pointer;font-size:11px;color:#e74c3c;margin-left:1px;opacity:.6}
+.school-col:hover .slot-remove{display:inline}
+.slot-remove:hover{opacity:1}
+.fmt-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.fmt-legend .li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.fmt-legend .ls{width:10px;height:10px;border-radius:2px}
+.q-sep{padding:5px 12px;font-size:11px;font-weight:700;color:var(--cyan);background:var(--navy-mid);border-left:3px solid var(--cyan);margin:5px 0 2px}
+.topic-pool{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:var(--radius-lg);padding:10px 12px;margin-bottom:12px}
+.pool-hdr{font-size:12px;font-weight:600;color:var(--label);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.pool-body{display:flex;flex-wrap:wrap;gap:4px;max-height:110px;overflow-y:auto}
+.pool-filters{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.pf-btn{padding:2px 9px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid var(--card-border);background:transparent;color:var(--secondary);cursor:pointer;transition:all .15s}
+.pf-btn.f-all.active{color:var(--white);background:rgba(255,255,255,.1);border-color:var(--white)}
+.pf-btn.f-live{color:var(--fmt-live)}.pf-btn.f-live.active{background:rgba(91,155,213,.15);border-color:var(--fmt-live)}
+.pf-btn.f-subject{color:var(--fmt-subject)}.pf-btn.f-subject.active{background:rgba(112,173,71,.15);border-color:var(--fmt-subject)}
+.pf-btn.f-async{color:var(--fmt-async)}.pf-btn.f-async.active{background:rgba(191,140,214,.15);border-color:var(--fmt-async)}
+
+/* ── Kanban ── */
+.kanban-board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;overflow-x:auto;min-height:200px}
+.k-col{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:var(--radius-lg);min-height:200px;display:flex;flex-direction:column}
+.k-col-hdr{padding:9px 12px;font-size:12px;font-weight:600;border-bottom:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center}
+.k-col-body{padding:6px;flex:1;display:flex;flex-direction:column;gap:5px}
+.k-col-body.drag-over{background:var(--cyan-glow)}
+
+/* ── Kanban card (unified detail) ── */
+.k-card{background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:border-color .15s;font-size:12px}
+.k-card:hover{border-color:var(--cyan)}
+.k-card .kc-drag-handle{cursor:grab;color:var(--secondary);font-size:10px;margin-bottom:4px;user-select:none}
+.k-card .kc-school{font-size:10px;font-weight:600;margin-bottom:2px}
+.k-card .kc-type{font-size:9px;margin-bottom:4px}
+.k-card .kc-topic{font-weight:500;color:var(--label);margin-bottom:4px}
+.k-card .kc-week{font-size:10px;color:var(--secondary);margin-bottom:4px}
+.k-card .kc-links{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}
+.kc-link{font-size:9px;padding:1px 5px;background:rgba(82,201,231,.15);color:var(--cyan);border-radius:3px;text-decoration:none}
+.kc-link:hover{background:rgba(82,201,231,.3)}
+.k-card .kc-notes{font-size:10px;color:var(--muted);font-style:italic;margin-top:3px;border-top:1px solid var(--card-border);padding-top:3px}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--navy);border:1px solid var(--card-border);border-radius:var(--radius-lg);width:92%;max-width:660px;max-height:90vh;overflow-y:auto;padding:22px}
+.modal h2{color:var(--cyan);font-size:16px;margin-bottom:14px}
+.modal label{display:block;font-size:11px;color:var(--label);margin-bottom:3px;margin-top:10px}
+.modal input,.modal textarea,.modal select{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px}
+.modal textarea{min-height:70px;resize:vertical}
+.modal .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--card-border)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.modal-grid .full{grid-column:1/-1}
+.used-by{margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--radius)}
+.used-by-title{font-size:11px;color:var(--secondary);margin-bottom:4px}
+.modal-section{border-top:1px solid var(--card-border);margin-top:14px;padding-top:12px}
+.modal-section-title{font-size:11px;font-weight:600;color:var(--cyan);margin-bottom:8px}
+.file-link-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;padding:4px 6px;background:rgba(255,255,255,.04);border-radius:4px}
+.file-link-row a{color:var(--cyan);font-size:11px;text-decoration:none;flex:1}
+.file-link-row a:hover{text-decoration:underline}
+.file-link-row .rm{cursor:pointer;color:#e74c3c;font-size:12px;flex-shrink:0}
+.add-link-row{display:flex;gap:6px;margin-top:6px}
+.add-link-row input{padding:5px 8px;font-size:11px}
+.session-file-list{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+.sfl-item{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:rgba(82,201,231,.1);border-radius:3px;font-size:10px;color:var(--cyan)}
+.sfl-item a{color:var(--cyan);text-decoration:none}
+.sfl-item a:hover{text-decoration:underline}
+.sfl-rm{cursor:pointer;color:#e74c3c;margin-left:2px;font-size:11px}
+
+/* ── Catalogue ── */
+.cat-table{width:100%;border-collapse:collapse}
+.cat-table th{text-align:left;padding:8px 10px;font-size:10px;font-weight:600;color:var(--cyan);background:var(--navy-mid);border-bottom:2px solid var(--cyan-dim);position:sticky;top:0;z-index:3}
+.cat-table td{padding:8px 10px;border-bottom:1px solid var(--card-border);font-size:11px;vertical-align:top}
+.cat-table tr:hover td{background:rgba(255,255,255,.03)}
+.tid{color:var(--cyan);font-weight:600;font-size:10px;white-space:nowrap;cursor:pointer}
+.tid:hover{text-decoration:underline}
+.cell-text{color:var(--muted);line-height:1.4}
+.cell-ev{color:var(--secondary);font-size:10px;line-height:1.4}
+.week-badge{display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;margin:1px}
+
+/* ── Evidence ── */
+.ev-search{width:100%;max-width:400px;padding:7px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px;margin-bottom:14px}
+.ev-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px}
+.ev-card-text{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:6px}
+.ev-topic-pills{display:flex;flex-wrap:wrap;gap:3px}
+.ev-no-topics{color:var(--secondary);font-size:10px;font-style:italic}
+
+.stage-legend{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.sl-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+
+.hidden{display:none!important}
+@media(max-width:900px){.kanban-board{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="app-shell">
+  <!-- Reference Panel (pushes content) -->
+  <div id="ref-panel">
+    <div id="ref-panel-inner">
+      <h3>Topic Group Key <button class="btn btn-sm" onclick="toggleRefPanel()" style="padding:2px 7px;font-size:10px">✕</button></h3>
+      <div id="ref-groups-list"></div>
+      <div style="margin-top:12px;border-top:1px solid var(--card-border);padding-top:10px">
+        <button class="btn btn-sm btn-primary" onclick="openAddGroupModal()" style="width:100%">+ Add Group</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div id="main-shell">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-logo">🦉</div>
+        <h1>PD Command Center <span>· 2026–27</span></h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ref" id="ref-btn" onclick="toggleRefPanel()">📖 Group Key</button>
+        <button class="btn btn-primary" onclick="openTopicModal(null)">+ New Topic</button>
+      </div>
+    </div>
+    <div class="nav" id="nav">
+      <button class="nav-tab active" data-tab="schedule">Schedule</button>
+      <button class="nav-tab" data-tab="kanban">Build Tracker</button>
+      <button class="nav-tab" data-tab="catalogue">Topic Catalogue</button>
+      <button class="nav-tab" data-tab="evidence">Evidence Base</button>
+    </div>
+    <div class="main" id="main-content"></div>
+  </div>
+</div>
+
+<div class="tooltip-popup hidden" id="tooltip"></div>
+<div id="modal-container"></div>
+
+<!-- Firebase SDKs: add these immediately before your existing main app script block. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+
+<script>
+// ════════════════════════════════
+// DATA
+// ════════════════════════════════
+const topics = {"VR-T01": {"id": "VR-T01", "title": "Environment Design that Does Pedagogical Work", "lean": "Technical", "description": "Go beyond default templates. Build environments where lighting, scale, object placement, and atmosphere are deliberately chosen to support a learning goal \u2014 not just decorate it.", "outcomes": "Teachers leave with a redesigned environment for one unit, a checklist of design decisions tied to learning goals, and language to explain *why* a space is built the way it is.", "evidence": "CAMIL identifies presence and agency as the affordances that distinguish IVR from flat media (Makransky & Petersen, 2021); thoughtful environment design is how those affordances get activated rather than wasted on novelty."}, "VR-T02": {"id": "VR-T02", "title": "3D Asset Creation with Blender \u2014 Foundations", "lean": "Technical", "description": "Hands-on intro to Blender: navigating 3D space, basic mesh editing, applying materials, and exporting assets in VR-compatible formats. No prior experience required.", "outcomes": "Teachers leave able to model and export a simple custom object for use in their VR environment. Realistic ceiling: one usable asset per teacher.", "evidence": "Maker-centered VR work expands the affordances teachers can offer (Caratachea & Jones, 2024); custom asset creation is the highest-ceiling content skill for spatial computing teachers."}, "VR-T03": {"id": "VR-T03", "title": "3D Asset Creation with Blender \u2014 Optimization & Import", "lean": "Technical", "description": "Follow-on to Blender Foundations. Optimize geometry and texture sizes for VR performance, troubleshoot common import issues, and place custom assets into a VR lesson environment.", "outcomes": "Teachers leave with a custom-built asset imported into a working VR scene plus a personal troubleshooting log for future imports.", "evidence": "Cognitive load research in VR shows that performance issues (frame drops, asset popping) increase extraneous cognitive load and degrade learning (Andersen & Makransky, 2021); optimization is a pedagogical skill, not just a technical one."}, "VR-T04": {"id": "VR-T04", "title": "Building Interactive Lessons: Triggers, Logic, and Student Choice", "lean": "Technical", "description": "Move from 'walk around and look' to lessons that respond to student actions. Use interactive features and branching logic to build experiences where the student is the agent, not a passenger.", "outcomes": "Teachers leave with one branching or trigger-based lesson built, plus a design pattern they can reuse across units.", "evidence": "Agency is one of two core CAMIL affordances of IVR; without interactivity, VR collapses toward video (Makransky & Petersen, 2021; Petersen et al., 2022)."}, "VR-T05": {"id": "VR-T05", "title": "Desktop and Hybrid Delivery: Designing for Mixed-Modality Classrooms", "lean": "Blended", "description": "Run VR lessons when not every student has a headset, when a student opts out, or when a desktop view is genuinely the right tool. Build parallel pathways rather than workarounds.", "outcomes": "Teachers leave with one lesson redesigned for hybrid delivery and a UDL-aligned decision rubric for when to use which modality.", "evidence": "UDL 3.0 (CAST, 2024) Multiple Means of Engagement and Action & Expression both demand modal flexibility; relying on a single modality creates barriers."}, "VR-P01": {"id": "VR-P01", "title": "Assessment in Spatial Computing: Capturing What Students Did", "lean": "Pedagogical", "description": "Rubrics, artifacts, and evidence-of-learning practices for VR work. Screenshots, recordings, student-built objects, and walkthrough narrations as evidence.", "outcomes": "Teachers leave with a rubric draft for one VR-based assessment plus a workflow for collecting and storing student VR artifacts in Canvas.", "evidence": "Procedural knowledge transfer is one of CAMIL's three learning outcomes; capturing it requires assessment methods beyond traditional written work (Makransky & Petersen, 2021)."}, "VR-P02": {"id": "VR-P02", "title": "Designing for Student Agency in Immersive Space", "lean": "Blended", "description": "Build environments and tasks where students make real decisions, not just navigate guided tours. Self-determination theory applied to spatial environments.", "outcomes": "Teachers leave with a redesigned lesson that swaps at least three teacher-directed moments for genuine student choice points.", "evidence": "Self-determination theory (Ryan & Deci, 2020) maps onto CAMIL's agency affordance; presence + agency together predict factual, conceptual, and procedural learning gains."}, "VR-P03": {"id": "VR-P03", "title": "Universal Design for Learning in Spatial Computing", "lean": "Pedagogical", "description": "UDL 3.0 applied to immersive environments. Multiple means of engagement, representation, and action & expression \u2014 including headset fatigue, nausea, fit, and the student for whom VR isn't workable. Constraints as design inputs.", "outcomes": "Teachers leave with a UDL audit of one VR unit and at least three planned variations for student access.", "evidence": "UDL Guidelines 3.0 (CAST, 2024) explicitly center identity and learner variability; VR's physical and sensory constraints make UDL planning more, not less, important."}, "VR-P04": {"id": "VR-P04", "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT", "lean": "Pedagogical", "description": "Three frameworks teachers can use to articulate *why* a VR choice is the right tool for the moment. Vocabulary for defending pedagogical choices when parents, admin, or accreditors ask.", "outcomes": "Teachers leave able to use one framework to evaluate an existing lesson and revise toward the 'transformation' end.", "evidence": "PICRAT (Kimmons, Graham, & West, 2020) was developed specifically to address gaps in SAMR and TPACK for teacher prep; the combination gives teachers vocabulary for intentional, defensible tech integration."}, "VR-P05": {"id": "VR-P05", "title": "Conducting Classroom Action Research on Your VR Practice", "lean": "Pedagogical", "description": "A lightweight action research cycle for teachers: identify a question, collect simple data (exit tickets, observation notes, student artifacts), analyze, adjust. Builds the evidence base for what works in your room.", "outcomes": "Teachers leave with a one-page action research plan for one unit and a data-collection schedule.", "evidence": "Classroom Action Research (Mertler, 2021) gives teachers a structured, low-burden way to generate evidence about their own practice; widely used in K-12 teacher research traditions (Stringer, 2007)."}, "VR-P06": {"id": "VR-P06", "title": "Content-Specific Pedagogy in Virtual Space \u2014 Foundations", "lean": "Pedagogical", "description": "What does *good pedagogy in your subject* look like when the classroom is spatial? Subject-specific affordances, constraints, and design moves for each content area.", "outcomes": "Teachers leave with a subject-specific 'what works in VR / what doesn't' map for their content and a redesigned lesson aligned to it.", "evidence": "VR's effectiveness varies sharply by subject and task type (Villena-Taranilla et al., 2022, K-6 meta-analysis); generic VR PD underserves teachers in subjects where the fit is more nuanced."}, "AI-T01": {"id": "AI-T01", "title": "AI for Lesson Planning and Differentiation", "lean": "Technical", "description": "Structured workflows for using AI in planning: tiered assignments, leveled reading adaptations, rubric generation from standards. Moves past 'ask the bot for ideas.'", "outcomes": "Teachers leave with a documented workflow they can repeat plus three differentiated versions of one current assignment.", "evidence": "Aligned to UNESCO AI Competency Framework for Teachers (2024) 'Pedagogy of AI' domain and AILit Framework (OECD/EC, 2025) 'Create with AI' competencies."}, "AI-T02": {"id": "AI-T02", "title": "AI for Formative Assessment and Feedback", "lean": "Blended", "description": "Using AI to analyze student writing, generate personalized feedback prompts, and build quick formative checks. Includes critical verification \u2014 never publish AI feedback without checking it.", "outcomes": "Teachers leave with one formative assessment workflow using AI and a verification checklist for AI-generated feedback.", "evidence": "AILit 'Manage AI' competency (OECD/EC, 2025) emphasizes critical evaluation; research on prompting literacy underscores that AI output quality depends heavily on instruction design (Lo, 2023; Ekin, 2023)."}, "AI-T03": {"id": "AI-T03", "title": "AI Prompt Design for Teachers", "lean": "Technical", "description": "How to write prompts that get useful output the first time. Role/context/constraints/examples patterns, iterative refinement, and saving prompts as reusable templates.", "outcomes": "Teachers leave with a personal library of 5\u201310 reusable prompts tied to their specific teaching tasks.", "evidence": "Prompting literacy is now treated as foundational AI competency (TeachAI/OECD AILit Framework, 2025); structured prompt design measurably improves output quality (Ekin, 2023)."}, "AI-T04": {"id": "AI-T04", "title": "Spatial Computing + AI: Where VR and AI Meet", "lean": "Technical", "description": "AI as a design partner for in-VR experiences: prompting AI to draft 3D-ready content, using in-world AI characters pedagogically, and where in-VR AI is genuinely additive vs. gimmicky.", "outcomes": "Teachers leave with one VR lesson that meaningfully uses an AI element, with a rationale for why AI is the right tool there.", "evidence": "Emerging research positions spatial computing + AI as the next phase of immersive learning (Jiang et al., 2025); critical evaluation matters as much as enthusiasm."}, "AI-P01": {"id": "AI-P01", "title": "Ethical AI Use: A Classroom Framework", "lean": "Pedagogical", "description": "Beyond policy compliance. Model good AI use for students, design assignments that are AI-resistant where needed and AI-enhanced where appropriate, talk to students about what AI is and isn't.", "outcomes": "Teachers leave with a one-page classroom AI policy and at least one assignment redesigned for intentional AI integration.", "evidence": "UNESCO AI Competency Framework for Teachers (2024) and AILit (OECD/EC, 2025) both name ethical use as foundational; teacher modeling is the primary pathway for student AI literacy."}, "AI-P02": {"id": "AI-P02", "title": "Designing AI-Enhanced and AI-Resistant Assignments", "lean": "Pedagogical", "description": "When should an assignment invite AI use, and when should it foreclose it? Practical design patterns: process-visible work, oral defense, in-class drafting, AI-as-tutor vs. AI-as-author.", "outcomes": "Teachers leave with two redesigned assignments \u2014 one AI-enhanced, one AI-resistant \u2014 plus reasoning notes for each.", "evidence": "Process-focused and oral-defense assessments emerge as durable patterns in K-12 AI research (Lee et al., 2024; Li et al., 2024)."}, "AI-P03": {"id": "AI-P03", "title": "Teaching Students AI Literacy: A Practical Roadmap", "lean": "Pedagogical", "description": "What students need to know about AI by grade band, anchored to the AILit Framework's four domains: Engage with AI, Create with AI, Manage AI, Design AI. Translates a global framework into classroom moves.", "outcomes": "Teachers leave with three classroom moves they can use within two weeks, mapped to AILit competencies appropriate for their grade band.", "evidence": "AILit Framework (OECD/EC, 2025) and UNESCO AI Competency Framework for Students (2024); both treat AI literacy as a K-12 priority, not an elective."}, "BL-01": {"id": "BL-01", "title": "Design Thinking for Lesson Design", "lean": "Blended", "description": "Empathize/Define/Ideate/Prototype/Test as a lesson design method. Teachers identify a real classroom problem, ideate, prototype a lesson, test in a low-stakes way.", "outcomes": "Teachers leave with a prototype lesson tied to a real classroom problem plus a test-and-iterate plan.", "evidence": "Design thinking adapts well to teacher PD as a creativity and innovation framework (Henriksen, Richardson, & Mehta, 2017; Henriksen, Gretter, & Richardson, 2020)."}, "BL-02": {"id": "BL-02", "title": "Cognitive Load and Lesson Pacing in Immersive Environments", "lean": "Pedagogical", "description": "Why VR lessons that 'felt great' sometimes produce thin learning. Intrinsic vs. extraneous vs. germane cognitive load, with concrete design moves to manage each.", "outcomes": "Teachers leave with a cognitive-load audit of one VR lesson and three concrete revisions to lower extraneous load.", "evidence": "Cognitive load in VR is empirically distinct from flat-screen learning (Andersen & Makransky, 2021); CAMIL identifies load as a key mediator of learning outcomes."}, "BL-03": {"id": "BL-03", "title": "Live Showcase Prep & Peer Critique Protocols", "lean": "Blended", "description": "Preparing for VR Showcase weeks (Q1, Q2, Q3, Q4). Structured peer critique using tuning protocols (warm/cool feedback, charrettes) so feedback actually improves lessons rather than performing politeness.", "outcomes": "Teachers leave Showcase-ready with at least two peer critiques received and incorporated.", "evidence": "Tuning protocols are well-established in teacher professional learning communities (McDonald et al., 2013, *The Power of Protocols*); structured feedback outperforms unstructured collegial conversation."}, "BL-04": {"id": "BL-04", "title": "Closing the Loop: Year-End Reflection & Lesson Archiving", "lean": "Pedagogical", "description": "End-of-year practice: what worked, what didn't, what to archive, what to retire. Reflective protocols + a lightweight documentation routine that makes next year easier.", "outcomes": "Teachers leave with an archived 'lessons that worked' folder in OneDrive and one written reflection per major unit.", "evidence": "Reflective practice with structured artifacts produces stronger transfer than open reflection alone (Sch\u00f6n, 1984; Brookfield, 2017)."}, "MATH-01": {"id": "MATH-01", "title": "Algebra and Symbolic Math in Virtual Space: Right Tool, Wrong Tool", "lean": "Blended", "description": "Math is a known constraint case for VR. Map which math tasks benefit from spatial representation (geometry, modeling, embodied number sense) and which are genuinely better on a screen or whiteboard.", "outcomes": "Teachers leave with a personal 'what goes in VR / what doesn't' decision chart for their math units.", "evidence": "K-6 VR meta-analysis (Villena-Taranilla et al., 2022) shows uneven effects in math; subject affordances matter."}, "MATH-02": {"id": "MATH-02", "title": "Embodied Mathematics: Manipulatives, Scale, and Spatial Reasoning", "lean": "Pedagogical", "description": "Where VR genuinely excels in math: walking through scale models, manipulating 3D geometric forms, embodied number lines, gesture-based reasoning.", "outcomes": "Teachers leave with one embodied-math lesson designed for VR plus a comparison lesson designed for flat tools, for explicit reflection on the difference.", "evidence": "Embodied cognition research (Lakoff & N\u00fa\u00f1ez, 2000; Nathan, 2021) and VR-specific spatial reasoning studies support gesture-and-scale approaches to math."}, "MATH-03": {"id": "MATH-03", "title": "AI for Math Problem Sequencing and Worked Examples", "lean": "Technical", "description": "Using AI to generate scaffolded problem sequences, worked examples at multiple levels, and targeted formative checks. Verification is non-negotiable \u2014 AI gets math wrong silently.", "outcomes": "Teachers leave with one AI-generated, teacher-verified problem set ready for use.", "evidence": "Worked-example research (Sweller et al., 2011) is one of the most consistently supported instructional methods; AI lowers the labor cost of producing them while raising the verification burden."}, "ELA-01": {"id": "ELA-01", "title": "Performance, Voice, and Presence: ELA in Spatial Environments", "lean": "Pedagogical", "description": "ELA's strongest VR affordances are performance and presence \u2014 staging readings, embodying characters, walking through literary spaces. Design lessons that lean into these rather than reproducing flat-screen tasks.", "outcomes": "Teachers leave with one performance- or place-based ELA lesson designed for VR.", "evidence": "ELA-VR work consistently outperforms when it leverages embodiment and presence rather than text display (Ye, Thrasher, & Kaplan-Rakowski, 2024; Chun et al., 2022)."}, "ELA-02": {"id": "ELA-02", "title": "Writing in the Age of Generative AI: What ELA Teachers Actually Do", "lean": "Pedagogical", "description": "Practical responses to generative AI in writing instruction: process-visible drafts, in-class composition, AI-as-research-assistant vs. AI-as-author, and assessment redesigns that survive the new normal.", "outcomes": "Teachers leave with one redesigned writing unit and a defensible classroom policy.", "evidence": "Emerging consensus in ELA pedagogy emphasizes process visibility and oral defense (Lee et al., 2024); aligns with AILit 'Manage AI' competency."}, "ELA-03": {"id": "ELA-03", "title": "Building Immersive Literary Environments", "lean": "Technical", "description": "Reconstructing the setting of a novel, building a poet's room, walking through a historical period via the literature of that period. Environment-as-text.", "outcomes": "Teachers leave with one literary environment built (or planned) plus a student task set tied to it.", "evidence": "Environment-as-text aligns with situated cognition (Brown, Collins, & Duguid, 1989) and place-based learning traditions."}, "HIS-01": {"id": "HIS-01", "title": "Place-Based History: Designing Virtual Field Trips That Teach", "lean": "Blended", "description": "Move beyond 'go look at the Colosseum.' Build VR field trips with embedded inquiry tasks, source comparison stops, and analytic moves \u2014 not just sightseeing.", "outcomes": "Teachers leave with one virtual field trip redesigned to include at least three inquiry tasks tied to historical thinking skills.", "evidence": "Historical thinking frameworks (Wineburg, 2001; Stanford History Education Group) emphasize sourcing, contextualization, and corroboration \u2014 VR field trips that skip these are tourism, not history."}, "HIS-02": {"id": "HIS-02", "title": "Source Work and Document Analysis in Spatial Environments", "lean": "Pedagogical", "description": "Historical documents and artifacts in 3D space. Designing lessons where students examine sources at scale, compare, and reason \u2014 using VR's presence affordance to make abstract sourcing feel concrete.", "outcomes": "Teachers leave with one source-analysis lesson designed for spatial display.", "evidence": "Document-based historical reasoning is widely supported (Reisman, 2012); spatial presence may lower the affective barrier to engaging with archival material."}, "HIS-03": {"id": "HIS-03", "title": "AI as Historical Thinking Partner \u2014 and Where It Fails", "lean": "Blended", "description": "Using AI for primary source paraphrase, contextual background, and counterfactual probing. Equally important: where AI invents history, misattributes, and flattens perspective.", "outcomes": "Teachers leave with one inquiry-based lesson that uses AI critically and one student-facing handout on AI's historical failures.", "evidence": "Historical thinking requires sourcing and corroboration (Wineburg, 2001); AI's well-documented hallucination rates make this an ideal subject for critical AI literacy."}, "SCI-01": {"id": "SCI-01", "title": "Active Doing in VR: Designing Inquiry-Based Science Lessons", "lean": "Blended", "description": "Science's natural fit with VR comes from active manipulation: dissection, lab simulation, scale shifts (cellular to cosmic). Designing lessons where the student is the experimenter, not the audience.", "outcomes": "Teachers leave with one inquiry-based VR science lesson redesigned for active student manipulation rather than guided observation.", "evidence": "VR-in-science meta-analyses show strongest effects when students are active manipulators rather than observers (Villena-Taranilla et al., 2022; Jiang et al., 2025)."}, "SCI-02": {"id": "SCI-02", "title": "Modeling and Scale: Using VR's Unique Affordances in Science", "lean": "Pedagogical", "description": "Cellular, microscopic, planetary, and cosmological scales \u2014 the cases where VR genuinely shows students something they cannot otherwise see. Design moves to make scale-shift produce understanding, not just awe.", "outcomes": "Teachers leave with one scale-based science lesson and a debrief protocol that tests whether students built the intended mental model.", "evidence": "Spatial cognition research supports scale-based instruction for abstract science (Newcombe & Shipley, 2015); CAMIL embodiment factor supports immersive scale work."}, "SCI-03": {"id": "SCI-03", "title": "Lab Safety, Replication, and Procedural Learning in VR", "lean": "Blended", "description": "VR is exceptional for procedural science learning \u2014 labs, safety protocols, techniques. Practice in low-cost, low-risk virtual settings before (or alongside) physical labs.", "outcomes": "Teachers leave with one procedural science lesson designed for VR and a transfer plan to physical lab.", "evidence": "Procedural knowledge transfer is well-supported in CAMIL (Makransky & Petersen, 2021); VR's safety and replication affordances are particularly strong for lab procedures."}, "LANG-01": {"id": "LANG-01", "title": "Latin and Classical Languages in Spatial Space", "lean": "Blended", "description": "Where VR helps classical languages (immersive Roman/Greek contexts, place-based vocabulary, performance of speeches) and where it gets in the way (reference lookups, dense morphology drills). Build a hybrid practice.", "outcomes": "Teachers leave with one classical-language lesson designed for VR and a list of tasks they will explicitly keep on flat tools.", "evidence": "L2 VR research (Ye et al., 2024; Chun et al., 2022) shows clear gains in vocabulary acquisition through immersive context; reference work remains better on flat tools."}, "LANG-02": {"id": "LANG-02", "title": "Modern Language Speaking Practice in VR", "lean": "Pedagogical", "description": "Using VR for low-stakes speaking practice \u2014 conversation partners, role plays, navigating immersive contexts. Reducing the affective filter that blocks spoken L2 production.", "outcomes": "Teachers leave with one speaking-focused VR lesson and an assessment of student talk time vs. teacher talk time.", "evidence": "Frontiers in Psychology (2025) systematic review of K-12 L2 VR RCTs shows positive effects on speaking outcomes; affective filter reduction is a recurring mechanism (Kaplan-Rakowski & Thrasher, 2025)."}, "LANG-03": {"id": "LANG-03", "title": "Arts in Spatial Space: Making, Showing, Critiquing", "lean": "Technical", "description": "VR as studio, gallery, and stage. Building, displaying, and critiquing student art work in immersive space. Includes the workflow for showcasing student work across the school.", "outcomes": "Teachers leave with one arts unit redesigned to use VR for student creation, display, or critique.", "evidence": "Maker-centered VR research (Caratachea & Jones, 2024) and presence-based critique literature support immersive art-making and gallery work."}, "LOW-01": {"id": "LOW-01", "title": "Headset Routines and Classroom Management for 3rd-5th", "lean": "Pedagogical", "description": "Elementary-specific routines for the grades that actually wear headsets (3rd in Q3+, 4th, 5th): getting on/off, managing transitions, knowing when a child needs a break. Builds the operational baseline that makes everything else possible. Note: K-2 do not use headsets \u2014 see K1-04 / K1-05 for K-2 routine work.", "outcomes": "Teachers leave with a documented daily routine for VR transitions plus signals/cues tested with their grade band.", "evidence": "Early-childhood research on transitions and routines (Hemmeter et al., 2016) maps directly onto VR-specific classroom management; routine clarity is especially important for younger learners."}, "LOW-02": {"id": "LOW-02", "title": "Spatial Learning Across the Elementary Day: Cross-Subject Design (3rd-5th)", "lean": "Blended", "description": "For grades that actually use VR (3rd Q3+, 4th, 5th): design moves where one VR environment or asset library serves math, ELA, science, and social studies \u2014 reducing setup burden while maintaining content integrity.", "outcomes": "Teachers leave with one shared environment plus mapped applications across at least three subjects.", "evidence": "Multi-subject elementary structure is the norm, not the exception (Hadley & Sandholtz, 2021); PD that assumes subject silos underserves elementary teachers."}, "LOW-03": {"id": "LOW-03", "title": "Story-Based Learning in Spatial Environments (3rd-5th)", "lean": "Pedagogical", "description": "For grades that actually use VR (3rd Q3+, 4th, 5th): narrative as the elementary instructional spine, with the environment as part of the story. Note: K-2 narrative work happens without headsets \u2014 see K1-04 for the no-VR version.", "outcomes": "Teachers leave with one story-driven VR unit plus a read-aloud-to-immersive bridge.", "evidence": "Narrative as a learning frame is foundational in elementary pedagogy (Bruner, 1986); presence and embodiment in VR amplify narrative engagement (Makransky & Mayer, 2022)."}, "LOW-04": {"id": "LOW-04", "title": "Building a K-5 Continuum: How Experiential Learning Becomes VR Learning", "lean": "Pedagogical", "description": "Mapping the K-5 progression in your school. What does K experiential learning look like, and how does it set up 3rd-grade VR launch, 4th-grade independence, and 5th-grade student creation? Helps K-2 and 3-5 teachers understand each other's work and design vertical alignment.", "outcomes": "Teachers leave with a one-page K-5 progression map for one content area, showing how experiential learning in early grades scaffolds VR-based learning in later grades.", "evidence": "Vertical alignment supports learning continuity across grade bands (Schmidt et al., 2011); cross-grade-level professional learning supports teacher coherence."}, "LOW-05": {"id": "LOW-05", "title": "Documentation Practices Across K-5: Capturing What Students Did", "lean": "Pedagogical", "description": "Universal documentation practices \u2014 photos, observation notes, work samples, video clips \u2014 that work whether the learning happened outside, in a Teams chat, or in VR. A shared K-5 documentation routine produces consistency across the building and gives families a coherent picture of their child's growth.", "outcomes": "Teachers leave with a documentation workflow tested in their classroom plus a shared K-5 archive structure proposal.", "evidence": "Reggio-inspired documentation is a well-established practice for making early learning visible (Edwards, Gandini, & Forman, 2012); assessment and documentation support student learning across grade bands (Hattie, 2012)."}, "LOW-06": {"id": "LOW-06", "title": "Differentiating for the Range in Every Lower Classroom", "lean": "Pedagogical", "description": "Every Lower classroom \u2014 K through 5 \u2014 has a range of learners. UDL 3.0 applied across the grade bands. Multiple means of engagement, representation, action; works for experiential K-2 work and VR-active 3rd-5th work alike.", "outcomes": "Teachers leave with a UDL audit of one current unit and three planned variations for student access.", "evidence": "UDL Guidelines 3.0 (CAST, 2024) center learner variability and identity across all ages; applicable to non-tech and tech-mediated instruction equally."}, "K1-01": {"id": "K1-01", "title": "Designing Hands-On, Real-World Experiential Lessons (K-2)", "lean": "Pedagogical", "description": "Real-world experiential learning as the K-2 default: shadow tracing, weather observation, nature walks, outdoor measurement, sensory exploration stations. Designing units where the world is the curriculum and the classroom is where you process what you noticed.", "outcomes": "Teachers leave with one experiential unit plan that uses outdoor or hands-on real-world activities as the primary learning vehicle, with a documentation routine for capturing student observations.", "evidence": "Outdoor and experiential learning produce broad cognitive, physical, and social-emotional benefits in early childhood; a follow-up study found children who spent more time outside in early childhood had better attentional control and academic results 10 years later (Ulset et al., 2023). Outdoor learning is supported by paediatric guidance (Fyfe-Johnson et al., 2021) and a maturing evidence base (Mann et al., 2022; Kuo, Browning & Penner, 2018)."}, "K1-02": {"id": "K1-02", "title": "Embodied Math and Literacy: Learning Through the Body in K-2", "lean": "Pedagogical", "description": "Movement-based, gesture-rich, manipulative-heavy instruction for emergent learners. Walking number lines on the floor, manipulating physical counters, embodied phonics (making letter shapes with your body), gesture and song. The body as a learning tool.", "outcomes": "Teachers leave with one embodied math and one embodied literacy activity tested with their class and refined.", "evidence": "Embodied cognition research shows active manipulation outperforms passive observation for children's conceptual understanding (Lozada & Carro, 2016); early bodily experiences shape lasting cognitive development (Smith, 2005; Educational Psychology Review, 2024)."}, "K1-03": {"id": "K1-03", "title": "Teams and 2D Digital Tools That Earn Their Place in K-2", "lean": "Technical", "description": "Curated 2D digital tools and Teams workflows that actually work for K-2. Which apps support emergent literacy and early math without becoming digital babysitters. Setting up Teams channels that work for very young learners. Knowing when to put the device away.", "outcomes": "Teachers leave with a vetted toolkit of 2-3 K-2-appropriate digital tools, a Teams setup tested with their class, and clear criteria for when a digital tool is the right call vs. when it isn't.", "evidence": "NAEYC guidance on Technology and Interactive Media as Tools in Early Childhood (NAEYC & Fred Rogers Center, 2012; updated 2023) emphasizes intentional, developmentally-appropriate digital tool selection over screen time minimization alone."}, "K1-04": {"id": "K1-04", "title": "Story-Driven Learning in K-2 (Read-Aloud Without VR)", "lean": "Pedagogical", "description": "Narrative as the K-2 instructional spine. Read-aloud routines, dramatic play, story-extension activities, story-circle protocols. Connecting books to real-world experiences students can have themselves.", "outcomes": "Teachers leave with one story-driven thematic unit that connects a picture book to a real-world experiential activity, with a documentation plan.", "evidence": "Read-aloud is foundational K-1 literacy practice (Trelease, 2019); narrative is a primary frame for early childhood learning (Bruner, 1986)."}, "K1-05": {"id": "K1-05", "title": "Routines, Transitions, and Behavior Foundations for Earliest Learners", "lean": "Pedagogical", "description": "Operational foundation for K-2 classrooms \u2014 daily routines, transitions, signals, and behavior supports. Predictable structure as the precondition for everything else that follows.", "outcomes": "Teachers leave with a documented daily routine, transition protocols, and a set of tested classroom signals.", "evidence": "Pyramid Model and other early-childhood behavior supports identify routines and explicit transitions as the foundational tier (Hemmeter et al., 2016); predictability supports behavior regulation in early childhood."}, "K1-06": {"id": "K1-06", "title": "Teacher-Projected VR as a Discussion Artifact (K-2)", "lean": "Pedagogical", "description": "For the occasional case where you want to share what you're seeing in the VR app with your K-2 class on a projector or shared screen. How to frame what students are watching, how to pause for discussion, how to bridge from the projected image back to hands-on experience.", "outcomes": "Teachers leave with one lesson where teacher-projected VR is used as a single discussion artifact (5-10 min max), framed by hands-on experience before and after.", "evidence": "Screen-mediated shared experience can support engagement when accompanied by active adult mediation (Read et al., 2023); teacher mediation is the active ingredient in young children's screen-based learning (NAEYC, 2012/2023)."}, "K1-07": {"id": "K1-07", "title": "AI for K-2 Teacher Workflows (Planning, Differentiation, Feedback)", "lean": "Technical", "description": "Using AI in your own work \u2014 not with students. Differentiating activities for the range in your room, generating leveled materials, drafting parent communications, designing rubrics. Critical evaluation of output is part of the workflow.", "outcomes": "Teachers leave with one AI workflow they will actually use in the next two weeks, plus a checklist for verifying AI output before using it with students.", "evidence": "Aligned to UNESCO AI Competency Framework for Teachers (2024) 'Pedagogy of AI' domain; structured AI use can meaningfully reduce teacher administrative load (UNESCO, 2024)."}, "K1-08": {"id": "K1-08", "title": "Family Communication in K-2: Building Trust Around School Experiences", "lean": "Pedagogical", "description": "K-2 is many families' first sustained relationship with their child's school. Communication patterns that build trust: weekly photos with context, take-home documentation of experiential learning, conferences that center the child's growth, addressing concerns about screen time and digital tools.", "outcomes": "Teachers leave with a documented family communication routine (weekly cadence, format, content) plus a one-page handout explaining the K-2 experiential approach for parent night.", "evidence": "Family-school communication is a documented mediator of student outcomes (Henderson & Mapp, 2002); early grades are when family relationships with the school form."}, "G23-01": {"id": "G23-01", "title": "Experiential and Hands-On Learning for K-2 (Extension)", "lean": "Pedagogical", "description": "Building on the K-2 experiential learning baseline (K1-01) with more student-led inquiry. Outdoor science investigations, community-based learning, hands-on math manipulatives, science observation routines that 1st and 2nd graders can lead more independently.", "outcomes": "Teachers leave with one inquiry-based experiential unit designed for late-K-2, with explicit student-led data collection or observation.", "evidence": "Outdoor and place-based learning shows sustained cognitive and academic benefits across early elementary (Kuo, Browning & Penner, 2018; Mann et al., 2022); inquiry is developmentally appropriate at this stage."}, "G23-02": {"id": "G23-02", "title": "Building Reading Comprehension Through Concrete Experience (K-2)", "lean": "Pedagogical", "description": "Prior knowledge is the strongest predictor of reading comprehension. For 1st and 2nd graders, build that prior knowledge through real-world experience (a visit, an activity, an observation) before reading texts about it. The bridge from learning-to-read to reading-to-learn.", "outcomes": "Teachers leave with one comprehension unit where a concrete experience scaffolds the reading that follows.", "evidence": "Prior knowledge is the single strongest predictor of reading comprehension (Recht & Leslie, 1988); concrete experiences build schema efficiently (Willingham, 2017)."}, "G23-03": {"id": "G23-03", "title": "Embodied and Manipulative-Based Math for K-2 (Extension)", "lean": "Pedagogical", "description": "Building on early embodied math (K1-02) with the Concrete-Representational-Abstract progression. Place value blocks, fraction circles, geometric solids, embodied number lines \u2014 extensive time in the concrete phase before moving to symbolic math. Particularly important for 1st and 2nd grade math foundations.", "outcomes": "Teachers leave with one math unit that maps the CRA progression for a specific concept, with planned concrete and representational stages.", "evidence": "CRA progression is established math pedagogy with strong evidence for elementary (Witzel et al., 2008); embodied cognition supports early math (Lakoff & N\u00fa\u00f1ez, 2000; Lozada & Carro, 2016)."}, "G23-04": {"id": "G23-04", "title": "Teacher-Projected VR for Class Discussion (K-2)", "lean": "Pedagogical", "description": "Teacher uses the VR app on a shared screen as a discussion artifact for K-2. How to frame what students see, when to pause, how to pull conversation away from 'wow' and toward content. Useful for the occasional all-class VR experience without students wearing headsets. (Note: K1-06 covers the same topic \u2014 pick whichever framing better fits your team.)", "outcomes": "Teachers leave with one lesson that uses teacher-projected VR as a discussion anchor, with pause points and discussion prompts mapped.", "evidence": "Screen-mediated shared experience supports learning when accompanied by active adult mediation (Read et al., 2023); teacher framing is what makes screen-based content educational (NAEYC, 2012/2023)."}, "G23-05": {"id": "G23-05", "title": "Preparing 3rd Grade for Q3 VR Launch (3-5 Group)", "lean": "Pedagogical", "description": "For the 3-5 group: 3rd grade students start wearing headsets at the beginning of Q3 (Cycle 2). This topic covers the full preparation arc \u2014 Q1-Q2 routines and pre-VR exposure for 3rd graders, the Q3 onboarding sequence, supporting students who find it overwhelming, and first lessons that build comfort before content. Best timed for late Q1 or early Q2 Subject Live so 3rd-grade teachers have lead time before the January launch.", "outcomes": "Teachers leave with a 3rd-grade VR readiness plan: pre-launch classroom routines, Q3 onboarding sequence, first 3 student-in-headset lessons designed for comfort over content, and a parent communication plan for the transition.", "evidence": "Routines support behavior regulation across transitions (Hemmeter et al., 2016); introducing immersive media to children benefits from staged exposure and adult scaffolding (NAEYC, 2012/2023)."}, "G23-06": {"id": "G23-06", "title": "Cross-Subject Thematic Design for K-2", "lean": "Blended", "description": "Multi-subject elementary teaching is the norm. Designing thematic 2-week units where reading, math, science, and social studies all sit inside one anchoring experience or place. Reduces setup burden, deepens connections. Particularly powerful in K-2 where one teacher typically owns all subjects.", "outcomes": "Teachers leave with one thematic unit mapped across at least three subjects, anchored by a single shared experience.", "evidence": "Thematic integration is well-supported in elementary curriculum design (Drake & Reid, 2018); multi-subject elementary teaching benefits from shared infrastructure."}, "G23-07": {"id": "G23-07", "title": "Age-Appropriate Student Agency in K-2", "lean": "Pedagogical", "description": "Bounded choice for early learners. Three decision points, not thirty. Designing tasks where students choose within constraints \u2014 building agency and executive function without overwhelm. Applies across all K-2 subjects regardless of tech use.", "outcomes": "Teachers leave with one redesigned lesson that includes three meaningful student decision points and explicit scaffolding for the choices.", "evidence": "Bounded choice supports developing executive function (Diamond, 2013); self-determination supports motivation across grade bands (Ryan & Deci, 2020)."}, "G23-08": {"id": "G23-08", "title": "AI for K-2 Teacher Workflows \u2014 Extension (Differentiation, Feedback, Communication)", "lean": "Technical", "description": "Builds on K1-07 (foundational K-2 AI workflows). Goes deeper into specific use cases: differentiating for the wide range of readiness in a K-2 room, generating leveled materials and word lists, drafting family communications, designing rubrics for K-2 work. Critical evaluation before any AI output reaches a child.", "outcomes": "Teachers leave with one extended AI workflow they will use in the next two weeks (separate from the one developed in K1-07) plus a verification checklist.", "evidence": "Aligned to UNESCO AI Competency Framework for Teachers (2024) 'Pedagogy of AI' domain; AI is most defensible in teacher workflow rather than direct student use at this age (NAEYC, 2012/2023)."}, "K2-01": {"id": "K2-01", "title": "Spalding Method: Refresher for K-2 Teachers", "lean": "Pedagogical", "description": "Refresher session led by a teacher who has completed Spalding training, supporting K-2 teachers who haven't yet completed the full course. Covers the phonogram system, marking notation, the multisensory presentation cycle, and the daily Spalding routine. Designed as a working session \u2014 teachers practice the method during the PD time.", "outcomes": "Teachers leave able to deliver a Spalding daily routine to their K-2 classroom plus a peer-practice partnership with another teacher for the following week.", "evidence": "The Spalding Method (Writing Road to Reading) is an evidence-based, explicit, systematic, multisensory phonics approach incorporating the five pillars of effective reading instruction identified by the National Reading Panel: phonemic awareness, phonics, vocabulary, fluency, and comprehension (Spalding Education International; National Reading Panel, 2000). Adapted from Orton-Gillingham, accredited by IMSLEC."}, "K2-02": {"id": "K2-02", "title": "Spalding Phonogram Instruction: Going Deeper", "lean": "Pedagogical", "description": "Beyond the basics. Working with the 70 Spalding phonograms in classroom rotation, trouble-shooting common student difficulties, integrating phonograms across spelling, writing, and reading. For K-2 teachers comfortable with the basics who want to extend their fluency.", "outcomes": "Teachers leave with a phonogram-introduction sequence customized to their classroom and a troubleshooting reference for the 10 most commonly confused phonograms.", "evidence": "Multisensory phonics instruction has strong evidence for K-2 reading outcomes (National Reading Panel, 2000; LDOnline, 2023); Spalding's structured approach is particularly effective for diverse learners including English learners and students with learning disabilities."}, "K2-03": {"id": "K2-03", "title": "Integrating Spalding with Real-World Experiential Learning", "lean": "Blended", "description": "Bringing Spalding into the experiential K-2 learning model. Using outdoor and hands-on activities as the context for phonogram work, embedding spelling and writing into the documentation of real-world experiences. Spalding plus shadow tracing, science observations, nature walks.", "outcomes": "Teachers leave with one unit that integrates a Spalding lesson sequence with a hands-on experiential anchor activity.", "evidence": "Multisensory phonics combined with rich contextual experience supports vocabulary and comprehension development (Beck, McKeown, & Kucan, 2013); Spalding's integration with writing and meaningful context aligns with Science of Reading research."}, "K2-04": {"id": "K2-04", "title": "New K-2 Teacher Onboarding (Q1) \u2014 Canvas, Teams, and Classroom Routines", "lean": "Technical", "description": "For Q1 use with newly hired K and 1st grade teachers. Canvas course setup, assignment creation, parent communication via Teams, classroom routine establishment, daily schedule, supplies and materials, OptimaED procedures. Designed to run weekly during Q1 alongside the regular New Teachers (VR-focused) track that 3-5+ new hires attend.", "outcomes": "Teachers leave each week with a specific competency: Canvas course built, Teams channels configured, first parent newsletter sent, daily routine documented, etc.", "evidence": "New teacher mentoring with structured onboarding shows strong effects on teacher retention and effectiveness (Ingersoll & Strong, 2011); separate K-2 onboarding respects developmental and operational differences from upper grades."}, "K2-05": {"id": "K2-05", "title": "Classical Conversation and Faculty VR Experiences for K-2 Teachers", "lean": "Pedagogical", "description": "Even though K-2 teachers don't use VR with students, they should still be able to participate as adult learners in faculty VR experiences \u2014 joining a professional development session, attending a faculty meeting in VR, sitting around a campfire for a classical conversation. Maintains their connection to the school's spatial-computing identity.", "outcomes": "Teachers leave with VR comfort: able to navigate the app, attend a meeting, join a conversation, and articulate the difference between teacher VR experience and student VR pedagogy.", "evidence": "Adult immersive learning experiences support faculty community and identity in spatial-computing schools; even non-teaching VR exposure builds shared vocabulary and lowers the threshold for occasional teacher-projected VR use (NAEYC, 2012/2023)."}, "G4-01": {"id": "G4-01", "title": "Place-Based Social Studies in VR for 4th Grade", "lean": "Blended", "description": "4th grade typically covers state history and US geography. VR field trips to Florida ecosystems, historical sites, and physical features \u2014 with embedded inquiry tasks rather than sightseeing.", "outcomes": "Teachers leave with one place-based 4th grade social studies unit with inquiry tasks tied to learning standards.", "evidence": "Place-based education supports civic and historical thinking (Sobel, 2004); Wineburg's historical thinking framework adapted for upper elementary."}, "G4-02": {"id": "G4-02", "title": "Fractions and Geometry in Spatial Environments (4th)", "lean": "Blended", "description": "4th grade math leans heavily on fractions and geometric reasoning. VR's spatial affordances are exceptional for these \u2014 manipulating fraction models, exploring 2D and 3D shapes, walking through angle and area concepts.", "outcomes": "Teachers leave with one fractions or geometry lesson redesigned for spatial manipulation.", "evidence": "Spatial reasoning correlates strongly with later mathematical achievement (Newcombe & Shipley, 2015); 4th grade is a critical developmental window for geometric thinking."}, "G4-03": {"id": "G4-03", "title": "Introducing Source Work to 4th Graders in Spatial Space", "lean": "Pedagogical", "description": "Age-appropriate primary source work. Students examine artifacts, documents, and images in 3D context \u2014 starting to ask 'who made this, when, and why.' Building the historical thinking habit early.", "outcomes": "Teachers leave with one source-based 4th grade lesson plus an age-appropriate scaffold for student questioning.", "evidence": "Historical thinking can be developed in upper elementary (Levstik & Barton, 2015); Stanford History Education Group's elementary resources support this."}, "G4-04": {"id": "G4-04", "title": "Scientific Inquiry and Modeling in VR (4th)", "lean": "Blended", "description": "4th grade science (ecosystems, energy, weather) maps well to VR modeling and scale shifts. Designing lessons where students observe, manipulate, and explain rather than passively view.", "outcomes": "Teachers leave with one inquiry-based 4th grade science lesson with VR-as-investigation-tool.", "evidence": "NGSS practices emphasize student inquiry over content delivery (NRC, 2012); VR's manipulability supports the 'developing and using models' practice."}, "G5-01": {"id": "G5-01", "title": "Argumentation and Evidence in 5th Grade ELA", "lean": "Pedagogical", "description": "5th graders are ready for evidence-based argument. Using VR environments to ground argumentation \u2014 students argue from specific spatial evidence they examined. Bridges to middle school writing demands.", "outcomes": "Teachers leave with one argumentation unit anchored in VR-based source material.", "evidence": "Argumentation is a Common Core writing demand starting in upper elementary; evidence-based reasoning is supported by concrete, examinable sources (Hillocks, 2010)."}, "G5-02": {"id": "G5-02", "title": "Pre-Algebraic Thinking and Modeling in Spatial Space (5th)", "lean": "Blended", "description": "5th grade math bridges into pre-algebraic thinking \u2014 variables, expressions, patterns. VR's ability to model relationships dynamically can make abstraction more concrete during this critical transition.", "outcomes": "Teachers leave with one pre-algebra lesson using dynamic spatial models.", "evidence": "Dynamic representation supports algebraic thinking (Kaput, 1995); CAMIL's embodiment factor supports abstract math learning."}, "G5-03": {"id": "G5-03", "title": "Student-Created VR Artifacts as Capstone Projects (5th)", "lean": "Technical", "description": "5th grade has the developmental readiness to be creators, not just consumers, in VR. Building, annotating, and presenting student-built artifacts as capstone work that bridges to middle school project demands.", "outcomes": "Teachers leave with one project unit where students build and present a VR artifact aligned to a learning standard.", "evidence": "Maker-centered VR research (Caratachea & Jones, 2024) shows that student creation builds deeper engagement; project-based learning is well-supported in upper elementary (Larmer et al., 2015)."}, "G5-04": {"id": "G5-04", "title": "Building 5th-to-6th Bridge Routines", "lean": "Pedagogical", "description": "End-of-elementary work that prepares students for middle school's looser structure. Self-regulation, longer-form work, multi-step projects \u2014 using VR settings to scaffold these transitions.", "outcomes": "Teachers leave with one transition-focused unit and a set of routines that build student self-management.", "evidence": "Self-regulated learning is a major predictor of middle-school success (Wolters, 2011); explicit teaching of SRL strategies pays off across the transition."}, "AL-01": {"id": "AL-01", "title": "Spatial Art-Making for Elementary Students", "lean": "Technical", "description": "VR as a studio for elementary students \u2014 3D drawing, sculpting, environment design \u2014 at developmentally appropriate complexity. Tool selection, scaffolding, and assessment of art-making process.", "outcomes": "Teachers leave with one art-making unit using VR creation tools at the appropriate developmental level.", "evidence": "Process-focused art assessment is established practice (Hetland et al., 2013); maker-centered VR supports creative production (Caratachea & Jones, 2024)."}, "AL-02": {"id": "AL-02", "title": "World Language Immersion for Young Learners", "lean": "Pedagogical", "description": "Using VR's presence affordance to expose young learners to second language in context. Low-stakes, repeated exposure to vocabulary in setting; reducing affective filter through play.", "outcomes": "Teachers leave with one VR-immersion language activity plus an assessment of student L2 vocabulary acquisition before and after.", "evidence": "L2 acquisition benefits from low-anxiety, contextually-rich input (Krashen, 1985); K-12 L2 VR research shows consistent vocabulary gains (Ye et al., 2024)."}, "AL-03": {"id": "AL-03", "title": "Performance and Voice in Lower Elementary Art & Language", "lean": "Pedagogical", "description": "Performance work \u2014 reader's theater, dramatic interpretation, public speaking rehearsal \u2014 in VR. Lower-stakes, repeatable, and observable.", "outcomes": "Teachers leave with one performance-based art or language unit using VR for low-stakes rehearsal.", "evidence": "Performance reduces affective barriers to expressive language work (Wagner, 1998); VR's presence affordance supports rehearsal and feedback."}, "AL-04": {"id": "AL-04", "title": "Cross-Cultural Exploration in VR for Elementary Students", "lean": "Pedagogical", "description": "Visiting other places and cultural contexts through VR \u2014 not as tourism, but as a way to build appreciation and informed perspective. Includes critical consideration of whose perspective the VR experience represents.", "outcomes": "Teachers leave with one cross-cultural unit plus a reflection protocol on perspective and representation.", "evidence": "Culturally responsive teaching supports learning across diverse populations (Gay, 2018); UDL 3.0 (CAST, 2024) centers identity and representation."}, "AS-01": {"id": "AS-01", "title": "Advanced Environment Design in VR \u2014 Year Over Year", "lean": "Technical", "description": "Elevate the same environment year after year. Custom lighting, atmosphere, pedagogical purpose. Teachers who've been using the same space for two years need method, not just motivation.", "outcomes": "Async module with prompts to rebuild one core environment and document the changes for next year's iteration.", "evidence": "Same evidence as VR-T01."}, "AS-02": {"id": "AS-02", "title": "3D Asset Creation with Blender \u2014 Foundations", "lean": "Technical", "description": "Self-paced introduction to Blender. Mesh editing, exporting, basic materials.", "outcomes": "Async module with one custom asset built by completion.", "evidence": "Same evidence as VR-T02."}, "AS-03": {"id": "AS-03", "title": "3D Asset Creation with Blender \u2014 Optimization & Import", "lean": "Technical", "description": "Follow-on async module: optimization, import workflows, troubleshooting.", "outcomes": "Async module with one optimized custom asset placed into a VR scene.", "evidence": "Same evidence as VR-T03."}, "AS-04": {"id": "AS-04", "title": "Building Interactive Lessons: IFX, Logic, and Branching", "lean": "Technical", "description": "Self-paced module on interactive features, triggers, and student choice in VR lessons.", "outcomes": "Async module with one branching lesson built.", "evidence": "Same evidence as VR-T04."}, "AS-05": {"id": "AS-05", "title": "VR Assessment Design", "lean": "Pedagogical", "description": "Capturing artifacts, designing rubrics for spatial work, using VR-native outputs as evidence of learning.", "outcomes": "Async module with one rubric draft and an artifact-collection plan.", "evidence": "Same evidence as VR-P01."}, "AS-06": {"id": "AS-06", "title": "Desktop and Hybrid Delivery in VR", "lean": "Blended", "description": "Running VR lessons when not every student has a headset.", "outcomes": "Async module with one lesson redesigned for hybrid delivery.", "evidence": "Same evidence as VR-T05."}, "AS-07": {"id": "AS-07", "title": "AI for Lesson Planning and Differentiation", "lean": "Technical", "description": "Structured AI workflows for differentiated assignment generation.", "outcomes": "Async module with three differentiated versions of one assignment.", "evidence": "Same evidence as AI-T01."}, "AS-08": {"id": "AS-08", "title": "AI for Formative Assessment and Feedback", "lean": "Blended", "description": "AI-assisted formative assessment design with verification practices.", "outcomes": "Async module with one formative workflow and verification checklist.", "evidence": "Same evidence as AI-T02."}, "AS-09": {"id": "AS-09", "title": "Spatial Computing + AI Integration", "lean": "Technical", "description": "Where VR and AI meet: AI for in-VR experience design, in-world AI characters used pedagogically, AI-generated 3D-ready content.", "outcomes": "Async module with one VR lesson that meaningfully uses AI.", "evidence": "Same evidence as AI-T04."}, "AS-10": {"id": "AS-10", "title": "Universal Design for Learning in a Spatial Computing School", "lean": "Pedagogical", "description": "UDL 3.0 applied to VR. Multiple means of engagement, representation, action.", "outcomes": "Async module with a UDL audit of one VR unit and three planned variations.", "evidence": "Same evidence as VR-P03."}, "AS-11": {"id": "AS-11", "title": "Technology Integration Frameworks: SAMR, TPACK, PICRAT", "lean": "Pedagogical", "description": "Three frameworks for articulating why a tech choice is the right one.", "outcomes": "Async module with one lesson evaluated and revised using one framework.", "evidence": "Same evidence as VR-P04."}, "AS-12": {"id": "AS-12", "title": "Conducting Classroom Research to Back Your Decisions", "lean": "Pedagogical", "description": "Action research cycle for teachers \u2014 lightweight, data-informed, classroom-grounded.", "outcomes": "Async module with a one-page action research plan.", "evidence": "Same evidence as VR-P05."}, "AS-13": {"id": "AS-13", "title": "Content-Specific Pedagogy in Virtual Space", "lean": "Pedagogical", "description": "What does good subject-area pedagogy look like in spatial environments? Subject-specific affordances and design moves.", "outcomes": "Async module with a subject-specific 'what works / what doesn't' map.", "evidence": "Same evidence as VR-P06."}, "AS-14": {"id": "AS-14", "title": "Designing for Student Agency in VR", "lean": "Blended", "description": "Environment design + choice theory. Student decision points, not guided tours.", "outcomes": "Async module with one lesson redesigned for student agency.", "evidence": "Same evidence as VR-P02."}, "AS-15": {"id": "AS-15", "title": "Ethical AI Use: A Classroom Framework", "lean": "Pedagogical", "description": "Beyond compliance \u2014 modeling, assignment design, student conversations.", "outcomes": "Async module with a one-page AI policy and one redesigned assignment.", "evidence": "Same evidence as AI-P01."}, "AS-16": {"id": "AS-16", "title": "Classroom Management in Immersive Environments", "lean": "Pedagogical", "description": "What changes about classroom management when half your students are in headsets? Transitions, off-task behavior, time management, signals and cues, and the physical logistics of headset use across a class period. Builds the operational baseline that makes pedagogy possible.", "outcomes": "Async module with a documented daily VR routine, a transition protocol, and a tested set of in-headset signals (e.g., 'thumbs up means I can hear you').", "evidence": "Routines and transitions are foundational classroom management practices in K-12 (Hemmeter et al., 2016; Lemov, 2021); VR adds physical and attentional complexity that benefits from explicit routine design."}, "AS-17": {"id": "AS-17", "title": "Communicating with Families About VR and AI", "lean": "Pedagogical", "description": "Templates and talking points for parent-night, syllabus, conference, and individual-concern conversations about VR and AI in the classroom. Includes how to respond to the most common concerns: screen time, headset safety, AI cheating, data privacy.", "outcomes": "Async module producing a one-page family communication packet for the teacher's grade band, plus a set of email templates for common parent questions.", "evidence": "Family-school communication is a documented mediator of student outcomes (Henderson & Mapp, 2002, A New Wave of Evidence); proactive communication around new technologies reduces friction and increases family trust."}, "AS-18": {"id": "AS-18", "title": "VR for Neurodivergent Learners: Design Moves That Work", "lean": "Pedagogical", "description": "VR can be exceptional for some neurodivergent students (controllable sensory environments, low-stakes social rehearsal, calm spaces) and difficult for others (sensory overload, motion sensitivity). Design moves and accommodations grounded in current research.", "outcomes": "Async module producing a personal 'design moves' reference sheet for the teacher's current students with IEPs/504s/identified sensory needs.", "evidence": "VR for ASD/ADHD learners shows promising effects when sensory parameters are controllable (Ide-Okochi et al., 2022; ClassVR neuroempathy work, 2026); UDL Guidelines 3.0 (CAST, 2024) provide the design framework."}, "AS-19": {"id": "AS-19", "title": "Teaching Students Prompting Literacy", "lean": "Pedagogical", "description": "Prompting literacy as a student-facing skill, not just a teacher workflow. How to teach iterative refinement, evaluation of AI output, and ethical considerations \u2014 by grade band. Includes sample lesson sequences.", "outcomes": "Async module producing one student-facing prompting literacy lesson sequence appropriate for the teacher's grade band.", "evidence": "Prompt engineering is increasingly framed as a 21st-century K-12 literacy (emerging curriculum frameworks, 2025); AILit Framework (OECD/EC, 2025) names 'Create with AI' as a core student competency."}, "AS-20": {"id": "AS-20", "title": "AI Output Evaluation: Teaching Students to Critique What AI Gives Them", "lean": "Pedagogical", "description": "Beyond 'check AI for accuracy.' Structured protocols for students to evaluate AI responses across dimensions: factual accuracy, source plausibility, bias, completeness, tone, and missing perspectives. Builds the critical evaluation muscle the AILit Framework calls 'Manage AI.'", "outcomes": "Async module producing one evaluation protocol customized to the teacher's content area and a student-facing rubric for evaluating AI output.", "evidence": "AILit 'Manage AI' competency (OECD/EC, 2025) and UNESCO student AI competency framework (2024) both center critical evaluation as foundational; current research shows uncritical AI acceptance is a major K-12 risk."}, "AS-21": {"id": "AS-21", "title": "Student Data Privacy in AI Tools", "lean": "Pedagogical", "description": "What data are AI tools collecting? What goes in the prompt is not private. Practical patterns for protecting student information: anonymization, what to never paste, how to evaluate a new AI tool's data practices, and how to talk to students about their own AI data hygiene.", "outcomes": "Async module producing a personal 'AI data hygiene' checklist and a one-page guide for students on what to never share with AI tools.", "evidence": "Student data privacy is named as a foundational concern in UNESCO AI Competency Framework for Teachers (2024) and AILit (OECD/EC, 2025); FERPA-aligned practice is increasingly being adapted for generative AI contexts."}, "AS-22": {"id": "AS-22", "title": "Multimodal Student Creation in VR: Beyond Consumption", "lean": "Technical", "description": "Move students from VR consumers to VR creators. Tools and design patterns for students building artifacts in spatial space \u2014 scenes, sculptures, performances, annotated environments \u2014 as evidence of learning.", "outcomes": "Async module producing one creation-focused assignment (vs. consumption-focused) with a workflow for students to build, save, and share their work.", "evidence": "Maker-centered VR research (Caratachea & Jones, 2024) shows that student creation produces deeper engagement than consumption; aligns with CAMIL agency affordance (Makransky & Petersen, 2021)."}, "AS-23": {"id": "AS-23", "title": "Co-Teaching and Collaboration in Spatial Environments", "lean": "Pedagogical", "description": "Two teachers, one VR space \u2014 or co-leading a VR lesson with a colleague who isn't physically present. Roles, communication, signal protocols, and the design of lessons that take advantage of two facilitators rather than just doubling up.", "outcomes": "Async module producing a co-teaching protocol and one lesson explicitly designed for two-teacher facilitation in VR.", "evidence": "Co-teaching research (Friend & Cook, 2017) identifies six configurations; spatial environments add a 'parallel virtual presence' configuration that's underexplored but high-leverage for inclusive instruction."}, "AS-24": {"id": "AS-24", "title": "Auditing Your Own VR Practice: A Self-Review Module", "lean": "Pedagogical", "description": "A structured self-audit teachers run on their own VR lessons. Uses CAMIL, UDL 3.0, and PICRAT as audit lenses. Identifies which lessons leverage VR's distinctive affordances and which are essentially flat-screen lessons wearing a headset.", "outcomes": "Async module producing a completed audit of three of the teacher's existing VR lessons and a prioritized revision list.", "evidence": "Self-audit frameworks build reflective practice (Sch\u00f6n, 1984; Brookfield, 2017); structured rubrics outperform open reflection (Brookfield)."}, "AS-25": {"id": "AS-25", "title": "Multimodal Storytelling: VR + Audio + Text", "lean": "Blended", "description": "Designing units where students tell a story across modalities \u2014 a VR scene, a voice-over, a written artifact. Uses VR's presence affordance for the moments it fits and lets each modality do what it does best.", "outcomes": "Async module producing one multimodal storytelling unit with at least three distinct media integrated around one student goal.", "evidence": "Multimodal composition is a well-established framework in literacy education (New London Group, 1996; Cope & Kalantzis, 2020); UDL 3.0 (CAST, 2024) Multiple Means of Action & Expression directly supports cross-modal student work."}, "AS-26": {"id": "AS-26", "title": "Reflective Practice for Teachers: Building a Personal Practice", "lean": "Pedagogical", "description": "A sustainable reflection routine \u2014 not yearly, not weekly, but built into the rhythm of teaching. Journaling prompts, debrief protocols for after VR lessons, and lightweight artifact-keeping that pays off over a full year.", "outcomes": "Async module producing the teacher's own reflection routine, tested for at least two weeks during the module, with notes on what fit and what didn't.", "evidence": "Reflective practice produces stronger transfer when structured and routine (Sch\u00f6n, 1984; Brookfield, 2017); journaling and structured debriefs are durable vehicles."}, "AS-27": {"id": "AS-27", "title": "Lesson Library Hygiene: Organizing What You've Built", "lean": "Technical", "description": "Practical file management for spatial computing teachers. Naming conventions for VR scenes and assets, archive structure in OneDrive, version control for lessons you revise year over year, and how to make next year's planning faster.", "outcomes": "Async module producing the teacher's reorganized lesson library with a documented naming and versioning convention.", "evidence": "Knowledge management is a real but under-discussed teacher skill; lesson study research (Lewis et al., 2006) emphasizes that lasting practice depends on infrastructure for capturing and revising work."}, "AS-28": {"id": "AS-28", "title": "When VR Is the Wrong Tool: A Design Decision Module", "lean": "Pedagogical", "description": "Naming the cases where VR is genuinely not the right tool \u2014 and what is. Decision criteria, content-area examples, and explicit permission to use flat tools where they win. Counter to the implicit pressure to use VR every time.", "outcomes": "Async module producing a personal 'when not to VR' decision rubric for the teacher's content area, with at least three current lessons re-examined.", "evidence": "Right-tool reasoning aligns with PICRAT (Kimmons et al., 2020) and TPACK (Mishra & Koehler, 2006); explicit attention to when not to use a technology is as important as when to use it."}, "AS-29": {"id": "AS-29", "title": "AI for Administrative Workload Reduction", "lean": "Technical", "description": "Practical AI workflows for the unglamorous half of teaching: parent email drafts, rubric generation, schedule coordination, meeting note summarization, IEP documentation support. Reduces the cognitive overhead that keeps teachers from their pedagogical work.", "outcomes": "Async module producing a personal AI workflow for at least three recurring administrative tasks, with time-saved estimates.", "evidence": "Teacher workload reduction is one of the highest-leverage applications of AI in K-12 according to UNESCO AI Competency Framework (2024); time freed up reinvests in instruction."}, "AS-30": {"id": "AS-30", "title": "Bringing Returning Teachers Up to Speed on a New VR Platform", "lean": "Technical", "description": "If OptimaEd switches VR platforms mid-year, returning teachers need an efficient way to rebuild their fluency. This module gives them the platform-agnostic mental models and the specific platform-transition checklist to be productive fast. Covers feature mapping, asset migration, and 'translating' your existing lessons.", "outcomes": "Async module producing a feature-mapping document between the old and new platform plus one fully migrated lesson.", "evidence": "Transfer-of-learning research (Perkins & Salomon, 1992) supports explicit feature-mapping and analogical reasoning when learners move between similar tools; reduces the typical platform-switch productivity drop."}, "AS-31": {"id": "AS-31", "title": "Spalding Refresher (Self-Paced)", "lean": "Pedagogical", "description": "Self-paced refresher on the Spalding Method for K-2 teachers. Phonogram review, marking notation practice, daily routine reminders, video examples of classroom implementation, and self-check exercises. Pairs well with K2-01 / K2-02 live sessions but can stand alone.", "outcomes": "Async module producing a personal Spalding pacing plan for the next quarter and self-assessment of phonogram fluency.", "evidence": "Same evidence as K2-01 (Spalding Education International; National Reading Panel, 2000)."}, "AS-32": {"id": "AS-32", "title": "Hands-On Experiential Learning Library for K-2", "lean": "Pedagogical", "description": "A bank of vetted, classroom-tested experiential activities for K-2 organized by season, content area, and outdoor/indoor. Shadow tracing, weather observation, nature scavenger hunts, sensory exploration stations, simple science experiments. Each activity includes setup, materials list, learning objectives, and documentation suggestions.", "outcomes": "Async module where teachers select 3 activities to try, plan their integration into the next 2 weeks, and report back via Module Share.", "evidence": "Outdoor and experiential learning produce broad cognitive and academic benefits in early childhood (Ulset et al., 2023; Mann et al., 2022)."}, "AS-33": {"id": "AS-33", "title": "Teams Workflows for K-2 Classrooms", "lean": "Technical", "description": "Self-paced module on Teams workflows that actually work in K-2: assignments configuration, parent communication channels, file sharing, OneNote class notebooks for non-readers, voice notes, simple polls. Less tech, more right tech.", "outcomes": "Async module producing a documented Teams setup for the teacher's K-2 classroom.", "evidence": "NAEYC guidance on developmentally-appropriate technology use (NAEYC & Fred Rogers Center, 2012/2023); intentional tool selection over screen time minimization alone."}};
+const schedule = [{"week": 1, "date": "Aug 21", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": ["LOW-04"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 1, "date": "Aug 21", "school": "Middle", "sessionType": "Subject Live \u2014 Math", "topicIds": [], "status": "Awaiting SME", "notes": "", "fileLinks": []}, {"week": 1, "date": "Aug 21", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 1, "date": "Aug 21", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 1, "date": "Aug 21", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 2, "date": "Aug 28", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": ["K1-01"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 2, "date": "Aug 28", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": ["G23-01"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 2, "date": "Aug 28", "school": "Middle", "sessionType": "Async", "topicIds": ["AS-02", "AS-04", "AS-05"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 2, "date": "Aug 28", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 2, "date": "Aug 28", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 2, "date": "Aug 28", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 3, "date": "Sep 4", "school": "Lower", "sessionType": "Async", "topicIds": ["AS-07", "AS-08", "AS-17"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 3, "date": "Sep 4", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": ["VR-T01"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 3, "date": "Sep 4", "school": "High", "sessionType": "Subject Live \u2014 Math", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 3, "date": "Sep 4", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 3, "date": "Sep 4", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 4, "date": "Sep 11", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": ["K1-05"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 4, "date": "Sep 11", "school": "Middle", "sessionType": "Subject Live \u2014 ELA", "topicIds": [], "status": "Awaiting SME", "notes": "", "fileLinks": []}, {"week": 4, "date": "Sep 11", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 4, "date": "Sep 11", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 4, "date": "Sep 11", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 5, "date": "Sep 18", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": ["G23-016"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 5, "date": "Sep 18", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": ["AL-03"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 5, "date": "Sep 18", "school": "Middle", "sessionType": "Async", "topicIds": ["AS-09", "AS-18", "AS-19"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 5, "date": "Sep 18", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 5, "date": "Sep 18", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 5, "date": "Sep 18", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 6, "date": "Sep 25", "school": "Lower", "sessionType": "Async", "topicIds": ["AS-32", "AS-31", "AS-33"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 6, "date": "Sep 25", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": ["BL-02"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 6, "date": "Sep 25", "school": "High", "sessionType": "Subject Live \u2014 ELA", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 6, "date": "Sep 25", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 6, "date": "Sep 25", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 7, "date": "Oct 2", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": ["AI-T01"], "status": "Planning", "notes": "", "fileLinks": []}, {"week": 7, "date": "Oct 2", "school": "Middle", "sessionType": "Subject Live \u2014 History", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 7, "date": "Oct 2", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 7, "date": "Oct 2", "school": "New Tchrs", "sessionType": "Live (All)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 7, "date": "Oct 2", "school": "New K-2 Tchrs", "sessionType": "K-2 Onboarding", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 8, "date": "Oct 9", "school": "All", "sessionType": "\u2605 VR Showcase \u2014 Q1 End", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 9, "date": "Oct 16", "school": "All", "sessionType": "Parent-Teacher Conferences (No PD)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 10, "date": "Oct 23", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 10, "date": "Oct 23", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 10, "date": "Oct 23", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 10, "date": "Oct 23", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 11, "date": "Oct 30", "school": "Lower", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 11, "date": "Oct 30", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 11, "date": "Oct 30", "school": "High", "sessionType": "Subject Live \u2014 History", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 12, "date": "Nov 6", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 12, "date": "Nov 6", "school": "Middle", "sessionType": "Subject Live \u2014 Science", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 12, "date": "Nov 6", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 13, "date": "Nov 13", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 13, "date": "Nov 13", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 13, "date": "Nov 13", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 13, "date": "Nov 13", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 14, "date": "Nov 20", "school": "Lower", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 14, "date": "Nov 20", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 14, "date": "Nov 20", "school": "High", "sessionType": "Subject Live \u2014 Science", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 15, "date": "Dec 4", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 15, "date": "Dec 4", "school": "Middle", "sessionType": "Subject Live \u2014 Lang & Art", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 15, "date": "Dec 4", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 16, "date": "Dec 11", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 16, "date": "Dec 11", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 16, "date": "Dec 11", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 16, "date": "Dec 11", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 17, "date": "Dec 18", "school": "All", "sessionType": "\u2605 Christmas Party + VR Showcase \u2014 Q2 End \u00b7 CYCLE 1 COMPLETE", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 18, "date": "Jan 8", "school": "Lower", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 18, "date": "Jan 8", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 18, "date": "Jan 8", "school": "High", "sessionType": "Subject Live \u2014 Lang & Art", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 19, "date": "Jan 15", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 19, "date": "Jan 15", "school": "Middle", "sessionType": "Subject Live \u2014 Math", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 19, "date": "Jan 15", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 20, "date": "Jan 22", "school": "All", "sessionType": "Parent-Teacher Conferences (No PD)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 21, "date": "Jan 29", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 21, "date": "Jan 29", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 21, "date": "Jan 29", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 21, "date": "Jan 29", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 22, "date": "Feb 5 \u2605FTE", "school": "Lower", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 22, "date": "Feb 5 \u2605FTE", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 22, "date": "Feb 5 \u2605FTE", "school": "High", "sessionType": "Subject Live \u2014 Math", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 23, "date": "Feb 12", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 23, "date": "Feb 12", "school": "Middle", "sessionType": "Subject Live \u2014 ELA", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 23, "date": "Feb 12", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 24, "date": "Feb 19", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 24, "date": "Feb 19", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 24, "date": "Feb 19", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 24, "date": "Feb 19", "school": "High", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 25, "date": "Feb 26", "school": "Lower", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 25, "date": "Feb 26", "school": "Middle", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 25, "date": "Feb 26", "school": "High", "sessionType": "Subject Live \u2014 ELA", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 26, "date": "Mar 5", "school": "All", "sessionType": "\u2605 VR Showcase \u2014 Q3 End", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 27, "date": "Mar 12", "school": "All", "sessionType": "Parent-Teacher Conferences (No PD)", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 28, "date": "Mar 19", "school": "Lower", "sessionType": "Live \u2014 All-School", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 28, "date": "Mar 19", "school": "Middle", "sessionType": "Subject Live \u2014 History", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 28, "date": "Mar 19", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 29, "date": "Apr 9", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 29, "date": "Apr 9", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 29, "date": "Apr 9", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 29, "date": "Apr 9", "school": "High", "sessionType": "Subject Live \u2014 History", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 30, "date": "Apr 16", "school": "Lower", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 30, "date": "Apr 16", "school": "Middle", "sessionType": "Subject Live \u2014 Science", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 30, "date": "Apr 16", "school": "High", "sessionType": "Subject Live \u2014 Science", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 31, "date": "Apr 23", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 31, "date": "Apr 23", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 31, "date": "Apr 23", "school": "Middle", "sessionType": "Subject Live \u2014 Lang & Art", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 31, "date": "Apr 23", "school": "High", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 32, "date": "Apr 30", "school": "Lower K-2", "sessionType": "Subject Live \u00b7 Teams w/ Principal", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 32, "date": "Apr 30", "school": "Lower 3-5", "sessionType": "Subject Live \u00b7 VR w/ PD Lead", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 32, "date": "Apr 30", "school": "Middle", "sessionType": "Async", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 32, "date": "Apr 30", "school": "High", "sessionType": "Subject Live \u2014 Lang & Art", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 33, "date": "May 7", "school": "All", "sessionType": "\u2605 End-of-Year Party + VR Showcase \u2014 Q4 End \u00b7 CYCLE 2 COMPLETE", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 34, "date": "May 14", "school": "All", "sessionType": "Closeout PD: Lesson Archive & Documentation", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 35, "date": "May 21", "school": "All", "sessionType": "Closeout PD: Year-End Impact Report", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}, {"week": 36, "date": "May 28", "school": "All", "sessionType": "Closeout PD: Final Day \u00b7 Last day of classes", "topicIds": [], "status": "Unassigned", "notes": "", "fileLinks": []}];
+const STAGES = ['Planning','In Build','Review','Ready','Delivered'];
+
+// Topic Groups: prefix → {name, fmt, description}
+// fmt: live | subject | async
+const topicGroups = {
+  'VR-T': {name:'VR Technical', fmt:'live', desc:'Hands-on VR platform and environment technical skills'},
+  'VR-P': {name:'VR Pedagogical', fmt:'live', desc:'VR pedagogy, design frameworks, and assessment'},
+  'AI-T': {name:'AI Technical', fmt:'live', desc:'Practical AI workflows and tools for teachers'},
+  'AI-P': {name:'AI Pedagogical', fmt:'live', desc:'AI ethics, literacy, and classroom integration'},
+  'BL':   {name:'Blended / Cross-cutting', fmt:'live', desc:'Design thinking, cognitive load, showcase prep, year-end reflection'},
+  'ELA':  {name:'ELA Subject', fmt:'subject', desc:'English Language Arts subject-specific sessions'},
+  'MATH': {name:'Math Subject', fmt:'subject', desc:'Mathematics subject-specific sessions'},
+  'HIS':  {name:'History Subject', fmt:'subject', desc:'History and social studies subject-specific sessions'},
+  'SCI':  {name:'Science Subject', fmt:'subject', desc:'Science subject-specific sessions'},
+  'LANG': {name:'Language Arts (World/Classical)', fmt:'subject', desc:'World and classical language subject sessions'},
+  'LOW':  {name:'Lower School All-Grades', fmt:'subject', desc:'K–5 cross-grade topics and vertical alignment'},
+  'K1':   {name:'K–2 Foundational', fmt:'subject', desc:'Core K–2 classroom practices: experiential, embodied, literacy'},
+  'K2':   {name:'K–2 Spalding', fmt:'subject', desc:'Spalding phonics methodology for K–2 teachers'},
+  'G23':  {name:'Grades 1–3 Extension', fmt:'subject', desc:'Extended topics for K–2 and 3rd-grade transition'},
+  'G4':   {name:'Grade 4 Subject', fmt:'subject', desc:'Grade 4 content-specific VR and AI sessions'},
+  'G5':   {name:'Grade 5 Subject', fmt:'subject', desc:'Grade 5 content-specific VR, AI, and capstone sessions'},
+  'AL':   {name:'Arts & Language (Lower)', fmt:'subject', desc:'Art, world language, and performance for elementary'},
+  'AS':   {name:'Async Self-Paced', fmt:'async', desc:'OptimaPD async modules — available on-demand throughout the year'},
+};
+
+// ════════════════════════════════
+// FIREBASE / FIRESTORE PERSISTENCE
+// ════════════════════════════════
+// 1) Create your Firebase project.
+// 2) Register this page as a Web app.
+// 3) Copy your real firebaseConfig from Project settings > General > Your apps > SDK setup and configuration > Config.
+// 4) Paste it below, replacing the placeholder values.
+const firebaseConfig = {
+  apiKey: "AIzaSyAnJ2YobdBPhCF_YjrH8Dv73aYGGHbkRUU",
+  authDomain: "pd-command-center.firebaseapp.com",
+  projectId: "pd-command-center",
+  storageBucket: "pd-command-center.firebasestorage.app",
+  messagingSenderId: "608456637306",
+  appId: "1:608456637306:web:9f98091a5054fc7e41f4c3",
+  measurementId: "G-TX66XYDETD"
+};
+
+// Keep a frozen copy of the hardcoded data so the first empty Firestore database can be seeded automatically.
+const DEFAULT_TOPICS = JSON.parse(JSON.stringify(topics));
+const DEFAULT_SCHEDULE = JSON.parse(JSON.stringify(schedule));
+const DEFAULT_TOPIC_GROUPS = JSON.parse(JSON.stringify(topicGroups));
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+auth.useDeviceLanguage();
+const db = firebase.firestore();
+// Some school networks and privacy-focused browsers block Firestore's default streaming transport.
+// Long polling is slightly less elegant, but much more reliable across browsers/networks.
+db.settings({ experimentalForceLongPolling: true });
+const stateRef = db.collection('pdCommandCenter').doc('main');
+
+// Optional Microsoft settings:
+// - Leave MICROSOFT_TENANT as 'common' to allow any Microsoft account allowed by your Firebase provider setup.
+// - To restrict sign-in to one Azure/Microsoft Entra tenant, change this to your tenant ID or tenant domain.
+//   Example: 'contoso.onmicrosoft.com' or '00000000-0000-0000-0000-000000000000'
+// - ALLOWED_EMAIL_DOMAINS is a convenience check in the page, not a replacement for Firestore Security Rules.
+const MICROSOFT_TENANT = 'common';
+const ALLOWED_EMAIL_DOMAINS = []; // Example: ['optimaed.com']
+
+let isApplyingRemoteState = false;
+let hasLoadedRemoteState = false;
+let firestoreUnsubscribe = null;
+let authUser = null;
+
+
+function getMicrosoftProvider() {
+  const provider = new firebase.auth.OAuthProvider('microsoft.com');
+  provider.setCustomParameters({
+    prompt: 'select_account',
+    tenant: MICROSOFT_TENANT
+  });
+  return provider;
+}
+
+function isAllowedEmail(user) {
+  if (!ALLOWED_EMAIL_DOMAINS.length) return true;
+  const email = (user && user.email ? user.email : '').toLowerCase();
+  return ALLOWED_EMAIL_DOMAINS.some(domain => email.endsWith('@' + domain.toLowerCase()));
+}
+
+function currentUserLabel() {
+  if (!authUser) return '';
+  return authUser.displayName || authUser.email || 'Signed-in user';
+}
+
+function updateAuthUI() {
+  const actions = document.querySelector('.header-actions');
+  if (!actions) return;
+  let box = document.getElementById('auth-status-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'auth-status-box';
+    box.style.display = 'flex';
+    box.style.alignItems = 'center';
+    box.style.gap = '8px';
+    box.style.marginRight = '4px';
+    actions.insertBefore(box, actions.firstChild);
+  }
+  if (authUser) {
+    box.innerHTML = '<span style="font-size:11px;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Signed in: '+esc(currentUserLabel())+'</span>'+
+      '<button class="btn btn-sm" onclick="signOutUser()">Sign out</button>';
+  } else {
+    box.innerHTML = '<button class="btn btn-sm btn-primary" onclick="signInWithMicrosoft()">Sign in with Microsoft</button>';
+  }
+}
+
+function renderAuthGate(detail) {
+  const c = document.getElementById('main-content');
+  if (!c) return;
+  const detailHtml = detail ? '<pre style="white-space:pre-wrap;margin-top:10px;padding:12px;background:rgba(0,0,0,.25);border:1px solid var(--card-border);border-radius:6px;color:var(--label);font-size:11px;line-height:1.45;max-width:900px">'+esc(detail)+'</pre>' : '';
+  c.innerHTML = '<div style="max-width:620px;margin:42px auto;padding:24px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-lg);text-align:center">'+
+    '<div style="font-size:18px;font-weight:700;color:var(--cyan);margin-bottom:8px">Sign in required</div>'+
+    '<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px">Use your Microsoft account to open the shared PD Command Center. Once signed in, changes save to Firestore and update live for other signed-in users.</div>'+
+    '<button class="btn btn-primary" onclick="signInWithMicrosoft()">Sign in with Microsoft</button>'+
+    detailHtml+
+  '</div>';
+}
+
+async function signInWithMicrosoft() {
+  try {
+    await auth.signInWithPopup(getMicrosoftProvider());
+  } catch (err) {
+    console.error('Microsoft sign-in failed:', err);
+    if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')) {
+      renderAuthGate(firebaseErrorDetail(err) + '\n\nIf pop-ups are blocked, allow pop-ups for this site and try again.');
+    } else {
+      renderAuthGate(firebaseErrorDetail(err));
+    }
+  }
+}
+
+async function signOutUser() {
+  try {
+    await auth.signOut();
+  } catch (err) {
+    console.error('Sign-out failed:', err);
+    alert('Sign-out failed: ' + (err.message || err));
+  }
+}
+
+function initFirebaseAuth() {
+  updateAuthUI();
+  setLoadingMessage('Checking Microsoft sign-in...');
+  auth.onAuthStateChanged(user => {
+    authUser = user || null;
+    updateAuthUI();
+
+    if (firestoreUnsubscribe) {
+      firestoreUnsubscribe();
+      firestoreUnsubscribe = null;
+    }
+
+    if (!user) {
+      renderAuthGate();
+      return;
+    }
+
+    if (!isAllowedEmail(user)) {
+      const email = user.email || '(no email returned)';
+      auth.signOut();
+      renderAuthGate('This signed-in account is not on the allowed email-domain list: ' + email);
+      return;
+    }
+
+    initFirebaseData();
+  }, err => {
+    console.error('Auth state error:', err);
+    renderAuthGate(firebaseErrorDetail(err));
+  });
+}
+
+function cloneForFirestore(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function replaceObjectContents(target, source) {
+  Object.keys(target).forEach(key => delete target[key]);
+  Object.assign(target, cloneForFirestore(source || {}));
+}
+
+function replaceArrayContents(target, source) {
+  target.splice(0, target.length, ...cloneForFirestore(source || []));
+}
+
+function setLoadingMessage(message, detail) {
+  const c = document.getElementById('main-content');
+  if (!c) return;
+  const detailHtml = detail
+    ? '<pre style="white-space:pre-wrap;margin-top:10px;padding:12px;background:rgba(0,0,0,.25);border:1px solid var(--card-border);border-radius:6px;color:var(--label);font-size:11px;line-height:1.45;max-width:900px">' + esc(detail) + '</pre>'
+    : '';
+  c.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:20px">' + esc(message) + detailHtml + '</div>';
+}
+
+function firebaseErrorDetail(err) {
+  if (!err) return 'No technical error was provided.';
+  return [
+    'Code: ' + (err.code || '(no code)'),
+    'Message: ' + (err.message || String(err)),
+    '',
+    'Most common causes:',
+    '1. Firestore database has not been created yet in the Firebase console.',
+    '2. Firestore rules are blocking this browser. For first testing, use temporary test rules.',
+    '3. This browser/network is blocking Firebase requests. This version forces Firestore long polling to help with that.'
+  ].join('\n');
+}
+
+async function seedFirestoreIfEmpty() {
+  const snap = await stateRef.get();
+  const data = snap.exists ? snap.data() : null;
+  const isEmpty = !data || !data.topics || Object.keys(data.topics || {}).length === 0;
+
+  if (isEmpty) {
+    await stateRef.set({
+      topics: DEFAULT_TOPICS,
+      schedule: DEFAULT_SCHEDULE,
+      topicGroups: DEFAULT_TOPIC_GROUPS,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+function applyRemoteState(data) {
+  if (!data) return;
+  isApplyingRemoteState = true;
+  replaceObjectContents(topics, data.topics || {});
+  replaceArrayContents(schedule, data.schedule || []);
+  replaceObjectContents(topicGroups, data.topicGroups || {});
+  isApplyingRemoteState = false;
+  hasLoadedRemoteState = true;
+  renderRefGroups();
+  render();
+}
+
+function startFirestoreListener() {
+  return stateRef.onSnapshot(
+    snap => {
+      if (!snap.exists) return;
+      applyRemoteState(snap.data());
+    },
+    err => {
+      console.error('Firestore listener error:', err);
+      setLoadingMessage('Could not connect to Firestore. Check your Firebase config and Firestore rules.', firebaseErrorDetail(err));
+    }
+  );
+}
+
+async function saveAllData() {
+  if (isApplyingRemoteState) return;
+  if (!auth.currentUser) {
+    alert('Please sign in with Microsoft before making changes.');
+    renderAuthGate();
+    return;
+  }
+  try {
+    await stateRef.set({
+      topics: cloneForFirestore(topics),
+      schedule: cloneForFirestore(schedule),
+      topicGroups: cloneForFirestore(topicGroups),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email || '',
+        displayName: auth.currentUser.displayName || ''
+      }
+    }, { merge: true });
+  } catch (err) {
+    console.error('Firestore save failed:', err);
+    alert('Your change was made on this page, but it did not save to Firestore. ' + (err.message || 'Check your internet connection, Firebase config, and Firestore rules.'));
+  }
+}
+
+function saveScheduleChange() {
+  saveAllData();
+}
+
+async function initFirebaseData() {
+  setLoadingMessage('Loading PD Command Center data from Firestore...');
+  try {
+    await seedFirestoreIfEmpty();
+    firestoreUnsubscribe = startFirestoreListener();
+  } catch (err) {
+    console.error('Firebase startup failed:', err);
+    setLoadingMessage('Firebase did not start. Check your Firebase config and Firestore setup.', firebaseErrorDetail(err));
+  }
+}
+
+
+// Evidence citations — deduplicated from topic records
+function buildEvidenceMap() {
+  const map = {}; // citation text → Set of topic IDs
+  Object.values(topics).forEach(t => {
+    if (!t.evidence) return;
+    // Split on semicolons or newlines for multiple citations
+    const parts = t.evidence.split(/;\s*(?=[A-Z])/);
+    parts.forEach(raw => {
+      const cite = raw.trim();
+      if (!cite) return;
+      if (!map[cite]) map[cite] = new Set();
+      map[cite].add(t.id);
+    });
+  });
+  return map;
+}
+
+// ════════════════════════════════
+// FORMAT HELPERS
+// ════════════════════════════════
+function topicFmt(id) {
+  if (!id) return 'live';
+  // Match longest prefix first
+  const sorted = Object.keys(topicGroups).sort((a,b)=>b.length-a.length);
+  for (const pfx of sorted) {
+    if (id.startsWith(pfx)) return topicGroups[pfx].fmt;
+  }
+  return 'live';
+}
+function getFormat(stype, school) {
+  if (!stype) return 'live';
+  const s = stype.toLowerCase();
+  if (school) {
+    const sc = school.toLowerCase();
+    if (sc.includes('new k-2')||sc.includes('new k2')) return 'k2ob';
+    if (sc.includes('new ')) return 'newt';
+  }
+  if (s.includes('k-2 onboarding')||s.includes('k2 onboarding')) return 'k2ob';
+  if (s.includes('subject live')||s.includes('content-specific')) return 'subject';
+  if (s.includes('async')) return 'async';
+  if (s.includes('showcase')||s.includes('party')||s.includes('closeout')||s.includes('★')) return 'special';
+  if (s.includes('no pd')||s.includes('conference')) return 'nopd';
+  if (s.includes('live')) return 'live';
+  return 'live';
+}
+const fmtColors = {live:'var(--fmt-live)',subject:'var(--fmt-subject)',async:'var(--fmt-async)',newt:'var(--fmt-newt)',k2ob:'var(--fmt-k2ob)',special:'var(--fmt-special)',nopd:'var(--fmt-nopd)'};
+function fmtColor(f){ return fmtColors[f]||'var(--secondary)'; }
+function fmtLabel(f){ return {live:'Live All-School',subject:'Subject Live',async:'Async',newt:'New Teachers',k2ob:'K-2 Onboarding',special:'Special',nopd:'No PD'}[f]||f; }
+function fmtBgAlpha(f){ return {live:'rgba(91,155,213,.2)',subject:'rgba(112,173,71,.2)',async:'rgba(191,140,214,.2)',newt:'rgba(244,185,66,.2)',k2ob:'rgba(237,125,106,.2)',special:'rgba(255,217,102,.15)',nopd:'rgba(127,140,141,.15)'}[f]||'rgba(255,255,255,.1)'; }
+
+function getSchoolGroup(s){
+  if(!s)return'Other';
+  if(s.startsWith('Lower'))return'Lower';if(s==='Middle')return'Middle';if(s==='High')return'High';
+  if(s.includes('New K-2')||s.includes('New K2'))return'New K-2';
+  if(s.includes('New '))return'New Tchrs';if(s==='All')return'All';return'Other';
+}
+function getQuarter(w){if(w<=9)return'Q1';if(w<=17)return'Q2';if(w<=27)return'Q3';return'Q4'}
+
+function getTopicUsage(id){
+  const u=[];
+  schedule.forEach((s,i)=>{if(s.topicIds&&s.topicIds.includes(id))u.push({idx:i,school:s.school,week:s.week,date:s.date,status:s.status,fmt:getFormat(s.sessionType,s.school)})});
+  return u;
+}
+function stageDot(st){const cls=st.replace(/\s/g,'-');return'<span class="stage-dot '+cls+'" title="'+st+'"></span>'}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ════════════════════════════════
+// TOPIC TAG HTML
+// ════════════════════════════════
+function topicTagHtml(id, draggable, fromSlotIdx) {
+  const t = topics[id];
+  if (!t) return '<span class="topic-tag" style="opacity:.5">'+id+'</span>';
+  const uses = getTopicUsage(id);
+  let dot = '';
+  if (uses.length > 0) {
+    const so = {'Planning':0,'In Build':1,'Review':2,'Ready':3,'Delivered':4};
+    const best = uses.reduce((a,b)=>(so[a.status]||0)>=(so[b.status]||0)?a:b);
+    if (best.status !== 'Unassigned') dot = stageDot(best.status)+' ';
+  }
+  const fmt = topicFmt(id);
+  const fromAttr = fromSlotIdx !== undefined ? ' data-from-slot="'+fromSlotIdx+'"' : '';
+  return '<span class="topic-tag fmt-'+fmt+'" data-id="'+id+'"'+fromAttr+(draggable?' draggable="true"':'')+
+    ' onmouseenter="showTT(event,\''+id+'\')" onmouseleave="hideTT()" onclick="event.stopPropagation();openTopicModal(\''+id+'\')">'+
+    dot+id+'</span>';
+}
+
+// ════════════════════════════════
+// TOOLTIP
+// ════════════════════════════════
+function showTT(e, id) {
+  const t = topics[id]; if (!t) return;
+  const tip = document.getElementById('tooltip');
+  const uses = getTopicUsage(id);
+  let uh = '';
+  if (uses.length > 0) uh = '<div style="margin-top:6px;font-size:10px;color:var(--secondary)">📌 '+uses.map(u=>'<span style="color:'+fmtColor(u.fmt)+'">'+u.school+' W'+u.week+'</span>').join(', ')+'</div>';
+  tip.innerHTML = '<div class="tt-id">'+t.id+' <span class="lean-badge '+t.lean+'">'+t.lean+'</span></div>'+
+    '<div class="tt-title">'+esc(t.title)+'</div>'+
+    (t.description ? '<div class="tt-desc">'+t.description.slice(0,200)+(t.description.length>200?'…':'')+'</div>' : '') + uh;
+  tip.classList.remove('hidden');
+  let x = e.clientX+12, y = e.clientY+12;
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+  setTimeout(()=>{
+    const r=tip.getBoundingClientRect();
+    if(x+390>window.innerWidth)x=e.clientX-390;
+    if(y+r.height>window.innerHeight)y=e.clientY-r.height-12;
+    tip.style.left=x+'px';tip.style.top=y+'px';
+  },0);
+}
+function hideTT(){ document.getElementById('tooltip').classList.add('hidden'); }
+
+// ════════════════════════════════
+// REFERENCE PANEL
+// ════════════════════════════════
+let refOpen = false;
+function toggleRefPanel() {
+  refOpen = !refOpen;
+  document.getElementById('ref-panel').classList.toggle('open', refOpen);
+  document.getElementById('ref-btn').classList.toggle('active', refOpen);
+  renderRefGroups();
+}
+function renderRefGroups() {
+  const list = document.getElementById('ref-groups-list');
+  const fmtOrder = {live:0, subject:1, async:2};
+  const groups = Object.entries(topicGroups).sort((a,b)=>(fmtOrder[a[1].fmt]||0)-(fmtOrder[b[1].fmt]||0));
+  const countByPrefix = {};
+  Object.keys(topics).forEach(id => {
+    const sorted = Object.keys(topicGroups).sort((a,b)=>b.length-a.length);
+    for (const pfx of sorted) { if (id.startsWith(pfx)) { countByPrefix[pfx]=(countByPrefix[pfx]||0)+1; break; } }
+  });
+  list.innerHTML = groups.map(([pfx, g]) => {
+    const col = fmtColor(g.fmt);
+    return '<div class="ref-group">'+
+      '<div class="ref-group-prefix">'+
+        '<span style="color:'+col+'">'+pfx+'</span>'+
+        '<div style="display:flex;gap:4px">'+
+          '<span class="ref-group-fmt fmt-'+g.fmt+'" style="background:'+fmtBgAlpha(g.fmt)+';color:'+col+'">'+fmtLabel(g.fmt)+'</span>'+
+          '<button class="btn btn-sm" style="padding:1px 5px;font-size:9px" onclick="openEditGroupModal(\''+pfx+'\')">Edit</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ref-group-name">'+esc(g.name)+'</div>'+
+      (g.desc?'<div style="font-size:10px;color:var(--secondary);margin-top:2px">'+esc(g.desc)+'</div>':'')+
+      '<div class="ref-group-count">'+(countByPrefix[pfx]||0)+' topics</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openAddGroupModal() {
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:440px">'+
+    '<h2>Add Topic Group</h2>'+
+    '<label>Prefix (e.g. STEM, PBL)</label>'+
+    '<input id="g-pfx" placeholder="e.g. STEM" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">'+
+    '<div id="g-pfx-err" style="color:#e74c3c;font-size:10px;min-height:14px;margin-top:2px"></div>'+
+    '<label>Group Name</label><input id="g-name" placeholder="e.g. STEM Integrated">'+
+    '<label>PD Format</label>'+
+    '<select id="g-fmt"><option value="live">Live All-School</option><option value="subject">Subject Live</option><option value="async">Async</option></select>'+
+    '<label>Description (optional)</label><textarea id="g-desc" style="min-height:50px"></textarea>'+
+    '<div class="modal-actions">'+
+      '<button class="btn" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn btn-primary" onclick="saveGroup(null)">Add Group</button>'+
+    '</div></div></div>';
+}
+function openEditGroupModal(pfx) {
+  const g = topicGroups[pfx]; if (!g) return;
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:440px">'+
+    '<h2>Edit Group: '+pfx+'</h2>'+
+    '<label>Prefix (read-only)</label>'+
+    '<input value="'+esc(pfx)+'" readonly style="opacity:.6">'+
+    '<label>Group Name</label><input id="g-name" value="'+esc(g.name)+'">'+
+    '<label>PD Format</label>'+
+    '<select id="g-fmt">'+
+      ['live','subject','async'].map(f=>'<option value="'+f+'"'+(g.fmt===f?' selected':'')+'>'+fmtLabel(f)+'</option>').join('')+
+    '</select>'+
+    '<label>Description</label><textarea id="g-desc" style="min-height:50px">'+esc(g.desc||'')+'</textarea>'+
+    '<div class="modal-actions">'+
+      '<button class="btn" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn btn-danger" onclick="deleteGroup(\''+pfx+'\')">Delete Group</button>'+
+      '<button class="btn btn-primary" onclick="saveGroup(\''+pfx+'\')">Save</button>'+
+    '</div></div></div>';
+}
+function saveGroup(editPfx) {
+  const pfx = editPfx || document.getElementById('g-pfx').value.trim().toUpperCase();
+  const name = document.getElementById('g-name').value.trim();
+  const fmt = document.getElementById('g-fmt').value;
+  const desc = document.getElementById('g-desc').value.trim();
+  if (!pfx) { document.getElementById('g-pfx-err').textContent = 'Prefix is required.'; return; }
+  if (!editPfx && topicGroups[pfx]) { document.getElementById('g-pfx-err').textContent = 'That prefix is already taken.'; return; }
+  if (!name) return;
+  topicGroups[pfx] = {name, fmt, desc};
+  closeModal(); renderRefGroups(); render(); saveAllData();
+}
+function deleteGroup(pfx) {
+  if (!confirm('Delete group "'+pfx+'"? Topics with this prefix will stay but lose their group assignment.')) return;
+  delete topicGroups[pfx];
+  closeModal(); renderRefGroups(); render(); saveAllData();
+}
+
+// ════════════════════════════════
+// TABS & RENDER
+// ════════════════════════════════
+let currentTab = 'schedule';
+let schFilter = {school:'all', quarter:'all'};
+let kbFilter = {school:'all'};
+let catSearch = '', catLean = 'all';
+let poolFmt = 'all';
+let evSearch = '';
+
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); currentTab = btn.dataset.tab; render();
+  });
+});
+function render() {
+  const c = document.getElementById('main-content');
+  if (currentTab==='schedule') renderSchedule(c);
+  else if (currentTab==='kanban') renderKanban(c);
+  else if (currentTab==='catalogue') renderCatalogue(c);
+  else if (currentTab==='evidence') renderEvidence(c);
+  updateBadges();
+}
+
+// ════════════════════════════════
+// DRAG SCROLL
+// ════════════════════════════════
+let scrollInterval = null;
+document.addEventListener('dragover', e => {
+  const edge = 80, speed = 12;
+  const main = document.getElementById('main-content');
+  const x = e.clientX, y = e.clientY;
+  const vh = window.innerHeight, vw = window.innerWidth;
+  clearInterval(scrollInterval);
+  scrollInterval = setInterval(() => {
+    if (y < edge) main.scrollTop -= speed;
+    else if (y > vh - edge) main.scrollTop += speed;
+    if (x < edge) main.scrollLeft -= speed;
+    else if (x > vw - edge) main.scrollLeft += speed;
+  }, 30);
+});
+document.addEventListener('dragend', () => clearInterval(scrollInterval));
+document.addEventListener('drop', () => clearInterval(scrollInterval));
+
+// ════════════════════════════════
+// SCHEDULE VIEW
+// ════════════════════════════════
+function renderSchedule(c) {
+  let cols = ['Lower','Middle','High','New Tchrs','New K-2'];
+  if (schFilter.quarter==='Q2'||schFilter.quarter==='Q3'||schFilter.quarter==='Q4') cols = ['Lower','Middle','High'];
+  if (schFilter.school!=='all') cols = [schFilter.school].filter(x=>x);
+
+  const allIds = Object.keys(topics).sort();
+  const weeks = {};
+  schedule.forEach((s,i)=>{if(!weeks[s.week])weeks[s.week]={week:s.week,date:s.date,entries:[]};weeks[s.week].entries.push({...s,_idx:i})});
+  const wkNums = Object.keys(weeks).map(Number).sort((a,b)=>a-b);
+  const gc = '68px '+cols.map(()=>'1fr').join(' ');
+
+  let h = `<div class="fmt-legend">
+    <div class="li"><div class="ls" style="background:var(--fmt-live)"></div>Live All-School</div>
+    <div class="li"><div class="ls" style="background:var(--fmt-subject)"></div>Subject Live</div>
+    <div class="li"><div class="ls" style="background:var(--fmt-async)"></div>Async</div>
+    <div class="li"><div class="ls" style="background:var(--fmt-newt)"></div>New Teachers</div>
+    <div class="li"><div class="ls" style="background:var(--fmt-k2ob)"></div>K-2 Onboarding</div>
+  </div>
+  <div class="stage-legend"><span style="font-size:10px;color:var(--secondary);margin-right:4px">Build stage:</span>
+    ${STAGES.map(s=>'<div class="sl-item">'+stageDot(s)+' '+s+'</div>').join('')}
+  </div>
+  <div class="ctrl-row">
+    <select id="sch-school" onchange="schFilter.school=this.value;render()">
+      <option value="all">All Groups</option><option value="Lower">Lower</option><option value="Middle">Middle</option><option value="High">High</option><option value="New Tchrs">New Teachers</option><option value="New K-2">New K-2</option>
+    </select>
+    <select id="sch-q" onchange="schFilter.quarter=this.value;render()">
+      <option value="all">All Quarters</option><option value="Q1">Q1 (Wk 1–9)</option><option value="Q2">Q2 (Wk 10–17)</option><option value="Q3">Q3 (Wk 18–27)</option><option value="Q4">Q4 (Wk 28–36)</option>
+    </select>
+  </div>
+  <div class="topic-pool">
+    <div class="pool-hdr">
+      <span>📦 Topic Pool — drag to assign, click to view</span>
+      <div class="pool-filters">
+        <button class="pf-btn f-all ${poolFmt==='all'?'active':''}" onclick="poolFmt='all';render()">All</button>
+        <button class="pf-btn f-live ${poolFmt==='live'?'active':''}" onclick="poolFmt='live';render()">Live</button>
+        <button class="pf-btn f-subject ${poolFmt==='subject'?'active':''}" onclick="poolFmt='subject';render()">Subject</button>
+        <button class="pf-btn f-async ${poolFmt==='async'?'active':''}" onclick="poolFmt='async';render()">Async</button>
+        <input type="text" id="pool-search" placeholder="Search..." style="width:120px;padding:3px 7px;font-size:10px;background:var(--surface);border:1px solid var(--card-border);border-radius:4px;color:var(--white)" oninput="filterPool(this.value)">
+      </div>
+    </div>
+    <div class="pool-body" id="pool-body">`;
+  allIds.forEach(id => {
+    const fmt = topicFmt(id);
+    if (poolFmt==='all'||poolFmt===fmt) h += topicTagHtml(id, true);
+  });
+  h += `</div></div>`;
+
+  // Header row
+  h += `<div style="display:grid;grid-template-columns:${gc};gap:1px;margin-bottom:2px;position:sticky;top:0;z-index:5">
+    <div style="background:var(--navy-mid);padding:7px;text-align:center;font-size:11px;font-weight:600;color:var(--cyan)">Week</div>
+    ${cols.map(cn=>'<div style="background:var(--navy-mid);padding:7px;text-align:center;font-size:11px;font-weight:600;color:var(--cyan)">'+cn+'</div>').join('')}
+  </div>`;
+
+  let lastQ = '';
+  wkNums.forEach(wk => {
+    const w = weeks[wk]; const q = getQuarter(wk);
+    if (schFilter.quarter!=='all'&&q!==schFilter.quarter) return;
+    if (q!==lastQ) {
+      const ql={Q1:'Q1 — Foundation',Q2:'Q2 — Refinement',Q3:'Q3 — AI & Cycle 2',Q4:'Q4 — Synthesis'};
+      h += '<div class="q-sep">'+(ql[q]||q)+'</div>'; lastQ=q;
+    }
+    const allEntry = w.entries.find(e=>e.school==='All');
+    if (allEntry) {
+      const fmt = getFormat(allEntry.sessionType, allEntry.school);
+      h += '<div class="special-row" style="color:'+fmtColor(fmt)+';background:rgba(255,255,255,.04)"><span style="font-size:11px;color:var(--secondary);margin-right:6px">W'+wk+' · '+w.date+'</span>'+allEntry.sessionType+'</div>';
+      return;
+    }
+    h += '<div style="display:grid;grid-template-columns:'+gc+';gap:1px;margin-bottom:1px">'+
+      '<div class="week-label"><span class="wn">W'+wk+'</span><span class="wd">'+w.date+'</span></div>';
+    cols.forEach(colName => {
+      const entries = w.entries.filter(e=>{const sg=getSchoolGroup(e.school);if(colName==='Lower')return sg==='Lower';if(colName==='New K-2')return sg==='New K-2';return sg===colName});
+      if (colName==='Lower'&&entries.length>1) {
+        h += '<div style="display:flex;flex-direction:column;gap:1px">';
+        entries.forEach(entry => {
+          const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt);
+          h += '<div class="school-col" data-idx="'+idx+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onSDIdx(event)" style="min-height:38px">'+
+            '<div class="stype-lbl" style="color:'+col+'">'+entry.school+' · '+entry.sessionType+'</div>'+
+            '<div class="slot-content">';
+          if (entry.topicIds&&entry.topicIds.length>0) {
+            entry.topicIds.forEach(tid=>{h+=topicTagHtml(tid,false,idx)+'<span class="slot-remove" onclick="event.stopPropagation();rmSlot('+idx+',\''+tid+'\')" title="Remove">×</span> '});
+          } else { h+='<span class="empty-slot">no topic</span>'; }
+          h += '</div></div>';
+        });
+        h += '</div>';
+      } else {
+        h += '<div class="school-col" data-week="'+wk+'" data-col="'+colName+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onSD(event)">';
+        if (entries.length===0) { h+='<span class="empty-slot">—</span>'; }
+        else { entries.forEach(entry=>{
+          const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt);
+          h+='<div style="margin-bottom:3px"><div class="stype-lbl" style="color:'+col+'">'+(entry.school!==colName?entry.school+' · ':'')+entry.sessionType+'</div><div class="slot-content">';
+          if(entry.topicIds&&entry.topicIds.length>0){entry.topicIds.forEach(tid=>{h+=topicTagHtml(tid,false,idx)+'<span class="slot-remove" onclick="event.stopPropagation();rmSlot('+idx+',\''+tid+'\')" title="Remove">×</span> '})}
+          else{h+='<span class="empty-slot">no topic</span>'}
+          h+='</div></div>';
+        });}
+        h += '</div>';
+      }
+    });
+    h += '</div>';
+  });
+
+  c.innerHTML = h;
+  document.getElementById('sch-school').value = schFilter.school;
+  document.getElementById('sch-q').value = schFilter.quarter;
+  setupDrag();
+}
+
+function filterPool(v){
+  const b=document.getElementById('pool-body');if(!b)return;
+  const lv=v.toLowerCase();
+  b.querySelectorAll('.topic-tag').forEach(tag=>{const id=tag.dataset.id;const t=topics[id];tag.style.display=(!lv||id.toLowerCase().includes(lv)||(t&&t.title.toLowerCase().includes(lv)))?'':'none'});
+}
+
+// ════════════════════════════════
+// DRAG & DROP
+// ════════════════════════════════
+function setupDrag() {
+  document.querySelectorAll('#pool-body .topic-tag[draggable]').forEach(el=>{
+    el.addEventListener('dragstart', e=>{el.classList.add('dragging');e.dataTransfer.setData('topicId',el.dataset.id);e.dataTransfer.setData('fromSlot','');});
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+  });
+  // Also make slot tags draggable (copy, not move)
+  document.querySelectorAll('.school-col .topic-tag').forEach(el=>{
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart',e=>{
+      e.stopPropagation();
+      el.classList.add('dragging');
+      e.dataTransfer.setData('topicId',el.dataset.id);
+      e.dataTransfer.setData('fromSlot', el.dataset.fromSlot||'');
+    });
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+  });
+}
+function onDO(e){e.preventDefault();e.currentTarget.classList.add('drag-over')}
+function onDL(e){e.currentTarget.classList.remove('drag-over')}
+function onSD(e){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  const id=e.dataTransfer.getData('topicId');if(!id)return;
+  const wk=parseInt(e.currentTarget.dataset.week);const col=e.currentTarget.dataset.col;
+  const entry=schedule.find(s=>s.week===wk&&(()=>{const sg=getSchoolGroup(s.school);if(col==='Lower')return sg==='Lower';if(col==='New K-2')return sg==='New K-2';return sg===col})());
+  if(entry&&!entry.topicIds.includes(id)){entry.topicIds.push(id);if(entry.status==='Unassigned')entry.status='Planning';render();saveAllData();}
+}
+function onSDIdx(e){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  const id=e.dataTransfer.getData('topicId');if(!id)return;
+  const idx=parseInt(e.currentTarget.dataset.idx);if(isNaN(idx))return;
+  const entry=schedule[idx];
+  if(entry&&!entry.topicIds.includes(id)){entry.topicIds.push(id);if(entry.status==='Unassigned')entry.status='Planning';render();saveAllData();}
+}
+function rmSlot(idx,id){schedule[idx].topicIds=schedule[idx].topicIds.filter(t=>t!==id);if(schedule[idx].topicIds.length===0)schedule[idx].status='Unassigned';render();saveAllData();}
+
+// ════════════════════════════════
+// KANBAN VIEW
+// ════════════════════════════════
+function renderKanban(c) {
+  const assigned = schedule.filter(s=>s.topicIds&&s.topicIds.length>0&&s.status!=='Unassigned');
+  let h = `<div class="stage-legend">${STAGES.map(s=>'<div class="sl-item">'+stageDot(s)+' '+s+'</div>').join('')}</div>
+  <div class="ctrl-row">
+    <select id="kb-school" onchange="kbFilter.school=this.value;render()">
+      <option value="all">All Schools</option><option value="Lower">Lower</option><option value="Middle">Middle</option><option value="High">High</option>
+    </select>
+    <span style="font-size:11px;color:var(--secondary)">Drag cards to update stage · Click card to edit</span>
+  </div>
+  <div class="kanban-board">`;
+
+  STAGES.forEach(stage => {
+    let cards = stage==='Planning'
+      ? schedule.filter(s=>(s.status==='Planning'||s.status==='Awaiting SME')&&s.topicIds&&s.topicIds.length>0)
+      : assigned.filter(s=>s.status===stage);
+    if (kbFilter.school!=='all') cards=cards.filter(s=>getSchoolGroup(s.school)===kbFilter.school);
+
+    h += '<div class="k-col"><div class="k-col-hdr"><span>'+stageDot(stage)+' '+stage+'</span><span class="count" style="font-size:10px;color:var(--secondary)">'+cards.length+'</span></div>'+
+      '<div class="k-col-body" data-stage="'+stage+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onKD(event)">';
+
+    cards.forEach(entry => {
+      const idx = schedule.indexOf(entry);
+      const fmt = getFormat(entry.sessionType, entry.school);
+      const col = fmtColor(fmt);
+      const firstTopicId = (entry.topicIds&&entry.topicIds.length>0) ? entry.topicIds[0] : null;
+      h += '<div class="k-card" draggable="true" data-idx="'+idx+'" ondragstart="onKS(event)" ondragend="onKE(event)" onclick="openTopicModal('+(firstTopicId?'\''+firstTopicId+'\'':'null')+','+idx+')">'+ 
+        '<div class="kc-drag-handle">⠿ drag to reorder</div>'+
+        '<div class="kc-school" style="color:'+col+'">'+entry.school+'</div>'+
+        '<div class="kc-type" style="color:'+col+'">'+entry.sessionType+'</div>'+
+        '<div class="kc-topic">'+(entry.topicIds&&entry.topicIds.length>0?entry.topicIds.map(id=>{const t=topics[id];return'<div style="margin-bottom:2px"><span style="color:var(--cyan);font-size:10px;font-weight:700;margin-right:4px">'+id+'</span>'+(t?'<span>'+t.title+'</span>':'')+'</div>'}).join(''):'<em style="color:var(--secondary)">No topic</em>')+'</div>'+
+        '<div class="kc-week">W'+entry.week+' · '+entry.date+'</div>';
+      if (entry.notes) h+='<div class="kc-notes">'+esc(entry.notes)+'</div>';
+      if (entry.fileLinks&&entry.fileLinks.length>0) h+='<div class="kc-links">'+entry.fileLinks.map(fl=>'<a class="kc-link" href="'+fl.url+'" target="_blank">📎 '+fl.name+'</a>').join('')+'</div>';
+      if (entry.topicIds&&entry.topicIds.length>0) {
+        const topicLinks = entry.topicIds.flatMap(id=>(topics[id]?.fileLinks||[]));
+        if (topicLinks.length>0) h+='<div class="kc-links">'+topicLinks.map(fl=>'<a class="kc-link" href="'+fl.url+'" target="_blank" style="opacity:.7">📄 '+fl.name+'</a>').join('')+'</div>';
+      }
+      h += '</div>';
+    });
+    h += '</div></div>';
+  });
+  h += '</div>';
+  c.innerHTML = h;
+  document.getElementById('kb-school').value = kbFilter.school;
+}
+function onKS(e){e.currentTarget.classList.add('dragging');e.dataTransfer.setData('kbIdx',e.currentTarget.dataset.idx)}
+function onKE(e){e.currentTarget.classList.remove('dragging')}
+function onKD(e){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  const idx=parseInt(e.dataTransfer.getData('kbIdx'));
+  const stage=e.currentTarget.dataset.stage;
+  if(!isNaN(idx)&&stage){schedule[idx].status=stage;render();saveAllData();}
+}
+
+// ════════════════════════════════
+// UNIFIED TOPIC MODAL
+// opens for: topic only (sessionIdx=null), or topic+session (sessionIdx=number)
+// ════════════════════════════════
+function openTopicModal(topicId, sessionIdx) {
+  const t = topicId ? topics[topicId] : null;
+  const s = sessionIdx !== undefined && sessionIdx !== null ? schedule[sessionIdx] : null;
+  const uses = topicId ? getTopicUsage(topicId) : [];
+  const mc = document.getElementById('modal-container');
+
+  // Used-by section
+  let uh = '';
+  if (uses.length > 0) {
+    uh = '<div class="used-by"><div class="used-by-title">📌 Scheduled in:</div>'+
+      uses.map(u=>'<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+stageDot(u.status)+
+        '<span style="font-size:11px;color:'+fmtColor(u.fmt)+'">'+u.school+'</span>'+
+        '<span style="font-size:10px;color:var(--secondary)">W'+u.week+' · '+u.date+' · '+u.status+'</span></div>').join('')+
+    '</div>';
+  }
+
+  // Group dropdown
+  const groupOptions = Object.entries(topicGroups).map(([pfx,g])=>'<option value="'+pfx+'"'+(t&&t.id.startsWith(pfx)?' selected':'')+'>'+pfx+' — '+g.name+'</option>').join('');
+
+  // Topic file links
+  const tLinks = t?.fileLinks || [];
+  const tLinkHtml = tLinks.map((fl,fi)=>'<div class="file-link-row"><a href="'+fl.url+'" target="_blank">📎 '+fl.name+'</a><span class="rm" onclick="removeTopicLink(\''+topicId+'\','+fi+')">×</span></div>').join('');
+
+  // Session section (if sessionIdx provided) — status shown in top row of modal
+  let sessionSection = '';
+  if (s) {
+    const fmt = getFormat(s.sessionType, s.school);
+    sessionSection = '<div class="modal-section" style="padding-top:8px;margin-top:8px">'+
+      '<div style="font-size:10px;color:'+fmtColor(fmt)+'">🗓 Session: W'+s.week+' · '+s.date+' · '+s.school+' · '+s.sessionType+'</div>'+
+    '</div>';
+  }
+
+  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    '<h2>'+(t ? esc(t.id)+' — '+esc(t.title) : 'New Topic')+'</h2>'+
+    uh +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px;margin-bottom:2px">'+
+      '<div>'+
+        '<label>Topic Group</label>'+
+        '<select id="m-group"><option value="">— Select group —</option>'+groupOptions+'</select>'+
+      '</div>'+
+      '<div>'+
+        '<label>PD Format</label>'+
+        '<select id="m-fmt">'+
+          ['live','subject','async','newt','k2ob'].map(f=>'<option value="'+f+'"'+(t&&topicFmt(t.id)===f?' selected':'')+'>'+fmtLabel(f)+'</option>').join('')+
+        '</select>'+
+      '</div>'+
+      (s ?
+        '<div>'+
+          '<label>Build Status</label>'+
+          '<select onchange="schedule['+sessionIdx+'].status=this.value;render();saveAllData()">'+
+            STAGES.map(st=>'<option'+(s.status===st?' selected':'')+'>'+st+'</option>').join('')+
+          '</select>'+
+        '</div>'
+      : '<div></div>')+
+    '</div>'+
+    '<div class="modal-grid">'+
+      '<div>'+
+        '<label>Topic ID'+(t?' <span style="font-size:10px;color:var(--secondary)">(editable)</span>':'')+'</label>'+
+        '<input id="m-id" value="'+esc(t?t.id:'')+'" placeholder="e.g. VR-T06">'+
+        '<div id="m-id-err" style="color:#e74c3c;font-size:10px;min-height:12px"></div>'+
+      '</div>'+
+      '<div>'+
+        '<label>Lean</label>'+
+        '<select id="m-lean"><option'+(t&&t.lean==='Technical'?' selected':'')+'>Technical</option><option'+(t&&t.lean==='Pedagogical'?' selected':'')+'>Pedagogical</option><option'+(t&&t.lean==='Blended'?' selected':'')+'>Blended</option></select>'+
+      '</div>'+
+      '<div class="full">'+
+        '<label>Title</label><input id="m-title" value="'+esc(t?t.title:'')+'" placeholder="Topic title">'+
+      '</div>'+
+    '</div>'+
+    '<label>Description</label><textarea id="m-desc">'+esc(t?t.description:'')+'</textarea>'+
+    '<label>Learning Outcomes</label><textarea id="m-out">'+esc(t?t.outcomes:'')+'</textarea>'+
+    '<label>Evidence Base</label><textarea id="m-ev">'+esc(t?t.evidence:'')+'</textarea>'+
+    '<div class="modal-section">'+
+      '<div class="modal-section-title">📎 Topic Resource Links (OneDrive / SharePoint)</div>'+
+      '<div id="tlink-list-'+esc(topicId||'new')+'">'+tLinkHtml+'</div>'+
+      '<div class="add-link-row">'+
+        '<input id="tfl-n" placeholder="Label" style="flex:1">'+
+        '<input id="tfl-u" placeholder="Paste URL" style="flex:2">'+
+        '<button class="btn btn-sm btn-primary" onclick="addTopicLink(\''+esc(topicId||'')+'\')">Add</button>'+
+      '</div>'+
+    '</div>'+
+    sessionSection +
+    '<div class="modal-actions">'+
+      '<button class="btn" onclick="closeModal()">Close</button>'+
+      (t ? '<button class="btn btn-danger" onclick="deleteTopic(\''+esc(t.id)+'\' )">Delete</button>' : '')+
+      '<button class="btn btn-primary" onclick="saveTopic(\''+esc(topicId||'')+'\','+sessionIdx+')">'+(t?'Save Changes':'Add Topic')+'</button>'+
+    '</div>'+
+  '</div></div>';
+}
+
+function closeModal(){document.getElementById('modal-container').innerHTML=''}
+
+function saveTopic(editId, sessionIdx) {
+  const newId = document.getElementById('m-id').value.trim();
+  const title = document.getElementById('m-title').value.trim();
+  const errEl = document.getElementById('m-id-err');
+  if (!newId||!title){if(errEl)errEl.textContent='ID and Title are required.';return}
+  if (newId!==editId && topics[newId]) {if(errEl)errEl.textContent='That ID is already taken.';return}
+  const existing = editId ? topics[editId] : {};
+  const updated = {
+    id: newId, title,
+    lean: document.getElementById('m-lean').value,
+    description: document.getElementById('m-desc').value.trim(),
+    outcomes: document.getElementById('m-out').value.trim(),
+    evidence: document.getElementById('m-ev').value.trim(),
+    fileLinks: existing.fileLinks || [],
+  };
+  // If ID changed, update all schedule references
+  if (editId && newId !== editId) {
+    delete topics[editId];
+    schedule.forEach(s=>{if(s.topicIds){const i=s.topicIds.indexOf(editId);if(i>-1)s.topicIds[i]=newId;}});
+  }
+  topics[newId] = updated;
+  closeModal(); render(); saveAllData();
+}
+function deleteTopic(id){
+  if(!confirm('Delete '+id+'?'))return;
+  delete topics[id];
+  schedule.forEach(s=>{if(s.topicIds)s.topicIds=s.topicIds.filter(t=>t!==id)});
+  closeModal();render(); saveAllData();
+}
+
+function addTopicLink(topicId) {
+  const n=document.getElementById('tfl-n').value.trim();const u=document.getElementById('tfl-u').value.trim();
+  if(!n||!u)return;
+  if(topicId&&topics[topicId]){
+    if(!topics[topicId].fileLinks)topics[topicId].fileLinks=[];
+    topics[topicId].fileLinks.push({name:n,url:u});
+    openTopicModal(topicId); saveAllData();
+  }
+}
+function removeTopicLink(topicId,fi){
+  if(topics[topicId]?.fileLinks)topics[topicId].fileLinks.splice(fi,1);
+  openTopicModal(topicId); saveAllData();
+}
+function addSessLink(idx,topicId){
+  const n=document.getElementById('sfl-n-'+idx)?.value.trim();const u=document.getElementById('sfl-u-'+idx)?.value.trim();
+  if(!n||!u)return;if(!schedule[idx].fileLinks)schedule[idx].fileLinks=[];
+  schedule[idx].fileLinks.push({name:n,url:u});
+  openTopicModal(topicId,idx); saveAllData();
+}
+function removeSessLink(idx,fi){if(schedule[idx]?.fileLinks)schedule[idx].fileLinks.splice(fi,1);render();saveAllData();}
+
+// ════════════════════════════════
+// CATALOGUE
+// ════════════════════════════════
+function renderCatalogue(c) {
+  const allIds = Object.keys(topics).sort();
+  let filtered = allIds;
+  if (catSearch){const s=catSearch.toLowerCase();filtered=filtered.filter(id=>{const t=topics[id];return id.toLowerCase().includes(s)||t.title.toLowerCase().includes(s)||t.description.toLowerCase().includes(s)||t.outcomes.toLowerCase().includes(s)})}
+  if (catLean!=='all') filtered=filtered.filter(id=>topics[id].lean===catLean);
+
+  let h = '<div class="ctrl-row">'+
+    '<input type="text" placeholder="Search topics..." value="'+catSearch+'" oninput="catSearch=this.value;render()" style="flex:1;min-width:180px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+    '<select onchange="catLean=this.value;render()" style="padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+      '<option value="all">All Leans</option>'+
+      '<option value="Technical"'+(catLean==='Technical'?' selected':'')+'>Technical</option>'+
+      '<option value="Pedagogical"'+(catLean==='Pedagogical'?' selected':'')+'>Pedagogical</option>'+
+      '<option value="Blended"'+(catLean==='Blended'?' selected':'')+'>Blended</option>'+
+    '</select>'+
+    '<span style="font-size:11px;color:var(--secondary)">'+filtered.length+' topics</span>'+
+  '</div>';
+
+  h += '<div style="overflow-x:auto"><table class="cat-table"><thead><tr>'+
+    '<th>ID</th><th>Title</th><th>Lean</th><th>Description</th><th>Learning Outcomes</th><th>Evidence Base</th><th>Assigned</th><th></th>'+
+    '</tr></thead><tbody>';
+
+  filtered.forEach(id => {
+    const t=topics[id];const uses=getTopicUsage(id);
+    const usageHtml=uses.length>0
+      ?uses.map(u=>'<span class="week-badge" style="background:rgba(255,255,255,.08);color:'+fmtColor(u.fmt)+'">'+u.school+' W'+u.week+'</span>').join('')
+      :'<span style="color:var(--secondary);font-size:10px">—</span>';
+    h+='<tr>'+
+      '<td class="tid" onclick="openTopicModal(\''+id+'\')" onmouseenter="showTT(event,\''+id+'\')" onmouseleave="hideTT()">'+id+'</td>'+
+      '<td style="color:var(--white);font-weight:500;min-width:180px">'+esc(t.title)+'</td>'+
+      '<td><span class="lean-badge '+t.lean+'">'+t.lean+'</span></td>'+
+      '<td class="cell-text">'+esc(t.description||'—')+'</td>'+
+      '<td class="cell-text">'+esc(t.outcomes||'—')+'</td>'+
+      '<td class="cell-ev">'+esc(t.evidence||'—')+'</td>'+
+      '<td>'+usageHtml+'</td>'+
+      '<td><button class="btn btn-sm" onclick="openTopicModal(\''+id+'\')">Edit</button></td>'+
+    '</tr>';
+  });
+  h += '</tbody></table></div>';
+  c.innerHTML = h;
+}
+
+// ════════════════════════════════
+// EVIDENCE BASE TAB
+// ════════════════════════════════
+function renderEvidence(c) {
+  const evMap = buildEvidenceMap();
+  const entries = Object.entries(evMap).sort((a,b)=>b[1].size-a[1].size);
+  const filtered = evSearch
+    ? entries.filter(([cite])=>cite.toLowerCase().includes(evSearch.toLowerCase()))
+    : entries;
+
+  let h = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">'+entries.length+' unique citations drawn from topic evidence fields. Sorted by usage. Click a topic to open it.</div>'+
+    '<input class="ev-search" placeholder="Search citations..." value="'+esc(evSearch)+'" oninput="evSearch=this.value;render()">';
+
+  if (filtered.length===0) { h+='<div style="color:var(--secondary);font-size:13px">No matching citations.</div>'; }
+  filtered.forEach(([cite,idSet])=>{
+    const ids = [...idSet];
+    h += '<div class="ev-card">'+
+      '<div class="ev-card-text">'+esc(cite)+'</div>'+
+      '<div class="ev-topic-pills">'+
+        ids.map(id=>{
+          const t=topics[id];if(!t)return'';
+          const fmt=topicFmt(id);
+          return '<span class="topic-tag fmt-'+fmt+'" onclick="openTopicModal(\''+id+'\')" style="cursor:pointer">'+id+'</span>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+  });
+  c.innerHTML = h;
+}
+
+// ════════════════════════════════
+// BADGES
+// ════════════════════════════════
+function updateBadges(){
+  const tabs=document.querySelectorAll('.nav-tab');
+  const active=schedule.filter(s=>s.topicIds&&s.topicIds.length>0&&s.status!=='Unassigned').length;
+  const evCount=Object.keys(buildEvidenceMap()).length;
+  tabs[0].innerHTML='Schedule <span class="badge">'+schedule.length+'</span>';
+  tabs[1].innerHTML='Build Tracker <span class="badge">'+active+'</span>';
+  tabs[2].innerHTML='Topic Catalogue <span class="badge">'+Object.keys(topics).length+'</span>';
+  tabs[3].innerHTML='Evidence Base <span class="badge">'+evCount+'</span>';
+}
+
+initFirebaseAuth();
+</script>
+</body>
+</html>
