@@ -794,12 +794,32 @@ let catSearch = '', catIdSearch = '', catLean = 'all';
 let poolFmt = 'all';
 let evSearch = '';
 
+const VALID_TABS = ['schedule','kanban','catalogue','evidence'];
+function getTabFromLocation() {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab') || (window.location.hash ? window.location.hash.replace('#','') : '');
+  return VALID_TABS.includes(tab) ? tab : 'schedule';
+}
+function setActiveTabButton() {
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===currentTab));
+}
+function setTab(tab, pushHistory=true) {
+  if (!VALID_TABS.includes(tab)) tab = 'schedule';
+  currentTab = tab;
+  setActiveTabButton();
+  if (pushHistory) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    history.pushState({tab}, '', url);
+  }
+  render();
+}
 document.querySelectorAll('.nav-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active'); currentTab = btn.dataset.tab; render();
-  });
+  btn.addEventListener('click', () => setTab(btn.dataset.tab, true));
 });
+window.addEventListener('popstate', () => setTab(getTabFromLocation(), false));
+currentTab = getTabFromLocation();
+setActiveTabButton();
 function render() {
   const c = document.getElementById('main-content');
   if (currentTab==='schedule') renderSchedule(c);
@@ -1039,6 +1059,105 @@ function onKD(e){
   if(!isNaN(idx)&&stage){schedule[idx].status=stage;render();saveAllData();}
 }
 
+
+// ════════════════════════════════
+// TOPIC ID / PLACEMENT HELPERS
+// ════════════════════════════════
+function getTopicNumberInfo(id, prefix) {
+  if (!id || !prefix || !id.startsWith(prefix)) return null;
+  const rest = id.slice(prefix.length);
+  const m = rest.match(/^(-?)(\d+)$/);
+  if (!m) return null;
+  return {sep:m[1], num:parseInt(m[2],10), width:m[2].length};
+}
+function getTopicGroupPrefix(id) {
+  const sorted = Object.keys(topicGroups).sort((a,b)=>b.length-a.length);
+  for (const pfx of sorted) if (id && id.startsWith(pfx)) return pfx;
+  return '';
+}
+function getGroupNumberStyle(prefix) {
+  const ids = Object.keys(topics).filter(id=>getTopicNumberInfo(id,prefix)).sort(topicIdCompare);
+  if (ids.length) {
+    const info = getTopicNumberInfo(ids[0], prefix);
+    return {sep:info.sep, width:Math.max(2, info.width)};
+  }
+  return {sep:'-', width:2};
+}
+function makeTopicId(prefix, num) {
+  const style = getGroupNumberStyle(prefix);
+  return prefix + style.sep + String(num).padStart(style.width, '0');
+}
+function topicIdCompare(a,b) {
+  const pa=getTopicGroupPrefix(a), pb=getTopicGroupPrefix(b);
+  if (pa!==pb) return a.localeCompare(b, undefined, {numeric:true});
+  const ia=getTopicNumberInfo(a,pa), ib=getTopicNumberInfo(b,pb);
+  if (ia && ib && ia.num!==ib.num) return ia.num-ib.num;
+  return a.localeCompare(b, undefined, {numeric:true});
+}
+function getGroupTopicIds(prefix, excludeId) {
+  return Object.keys(topics).filter(id=>id!==excludeId && getTopicNumberInfo(id,prefix)).sort(topicIdCompare);
+}
+function renderPlacementOptions(prefix, editId) {
+  const sel = document.getElementById('m-place-after');
+  if (!sel) return;
+  if (!prefix) { sel.innerHTML = '<option value="">Select a group first</option>'; return; }
+  const ids = getGroupTopicIds(prefix, editId);
+  sel.innerHTML = '<option value="">At beginning of group</option>' + ids.map(id=>'<option value="'+esc(id)+'">After '+esc(id)+' — '+esc((topics[id]||{}).title||'')+'</option>').join('');
+}
+function previewTopicIdFromPlacement() {
+  const auto = document.getElementById('m-auto-id');
+  if (auto && !auto.checked) return;
+  const group = document.getElementById('m-group')?.value || '';
+  const afterId = document.getElementById('m-place-after')?.value || '';
+  const idInput = document.getElementById('m-id');
+  if (!group || !idInput) return;
+  let targetNum = 1;
+  if (afterId) {
+    const info = getTopicNumberInfo(afterId, group);
+    if (info) targetNum = info.num + 1;
+    else targetNum = getGroupTopicIds(group, idInput.dataset.editId || '').length + 1;
+  }
+  idInput.value = makeTopicId(group, targetNum);
+}
+function syncTopicPlacement() {
+  const group = document.getElementById('m-group')?.value || '';
+  const idInput = document.getElementById('m-id');
+  const editId = idInput?.dataset.editId || '';
+  renderPlacementOptions(group, editId);
+  previewTopicIdFromPlacement();
+}
+function applySequentialTopicPlacement(editId, topicData, targetPrefix, afterId) {
+  const targetIds = getGroupTopicIds(targetPrefix, editId);
+  const entries = targetIds.map(id=>({oldId:id, topic:topics[id]}));
+  let insertIndex = 0;
+  if (afterId) {
+    const idx = entries.findIndex(e=>e.oldId===afterId);
+    insertIndex = idx >= 0 ? idx + 1 : entries.length;
+  }
+  entries.splice(insertIndex, 0, {oldId:editId || null, topic:topicData, isMoved:true});
+
+  const renameMap = {};
+  const newTopics = {...topics};
+  if (editId) delete newTopics[editId];
+  entries.forEach(e => { if (e.oldId) delete newTopics[e.oldId]; });
+
+  entries.forEach((e, i) => {
+    const newId = makeTopicId(targetPrefix, i + 1);
+    if (e.oldId) renameMap[e.oldId] = newId;
+    const nextTopic = {...e.topic, id:newId};
+    if (e.isMoved) Object.assign(nextTopic, topicData, {id:newId});
+    newTopics[newId] = nextTopic;
+  });
+
+  Object.keys(topics).forEach(id=>delete topics[id]);
+  Object.assign(topics, newTopics);
+
+  schedule.forEach(s => {
+    if (s.topicIds) s.topicIds = s.topicIds.map(id => renameMap[id] || id);
+  });
+  return entries[insertIndex].topic.id;
+}
+
 // ════════════════════════════════
 // UNIFIED TOPIC MODAL
 // opens for: topic only (sessionIdx=null), or topic+session (sessionIdx=number)
@@ -1059,8 +1178,12 @@ function openTopicModal(topicId, sessionIdx) {
     '</div>';
   }
 
-  // Group dropdown
-  const groupOptions = Object.entries(topicGroups).map(([pfx,g])=>'<option value="'+pfx+'"'+(t&&t.id.startsWith(pfx)?' selected':'')+'>'+pfx+' — '+g.name+'</option>').join('');
+  // Group and placement dropdowns
+  const currentPfx = t ? getTopicGroupPrefix(t.id) : '';
+  const groupOptions = Object.entries(topicGroups).map(([pfx,g])=>'<option value="'+pfx+'"'+(currentPfx===pfx?' selected':'')+'>'+pfx+' — '+g.name+'</option>').join('');
+  const placementBasePfx = currentPfx || Object.keys(topicGroups)[0] || '';
+  const placeIds = placementBasePfx ? getGroupTopicIds(placementBasePfx, topicId) : [];
+  const placeOptions = '<option value="">At beginning of group</option>' + placeIds.map(id=>'<option value="'+esc(id)+'">After '+esc(id)+' — '+esc((topics[id]||{}).title||'')+'</option>').join('');
 
   // Topic file links
   const tLinks = t?.fileLinks || [];
@@ -1081,7 +1204,11 @@ function openTopicModal(topicId, sessionIdx) {
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px;margin-bottom:2px">'+
       '<div>'+
         '<label>Topic Group</label>'+
-        '<select id="m-group"><option value="">— Select group —</option>'+groupOptions+'</select>'+
+        '<select id="m-group" onchange="syncTopicPlacement()"><option value="">— Select group —</option>'+groupOptions+'</select>'+
+      '</div>'+
+      '<div>'+
+        '<label>Place sequentially</label>'+
+        '<select id="m-place-after" onchange="previewTopicIdFromPlacement()">'+placeOptions+'</select>'+
       '</div>'+
       '<div>'+
         '<label>PD Format</label>'+
@@ -1101,7 +1228,8 @@ function openTopicModal(topicId, sessionIdx) {
     '<div class="modal-grid">'+
       '<div>'+
         '<label>Topic ID'+(t?' <span style="font-size:10px;color:var(--secondary)">(editable)</span>':'')+'</label>'+
-        '<input id="m-id" value="'+esc(t?t.id:'')+'" placeholder="e.g. VR-T06">'+
+        '<input id="m-id" data-edit-id="'+esc(topicId||'')+'" value="'+esc(t?t.id:'')+'" placeholder="e.g. VR-T06">'+
+        '<label style="display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--secondary);font-size:10px"><input type="checkbox" id="m-auto-id" checked onchange="previewTopicIdFromPlacement()" style="width:auto"> Auto-number from group placement</label>'+
         '<div id="m-id-err" style="color:#e74c3c;font-size:10px;min-height:12px"></div>'+
       '</div>'+
       '<div>'+
@@ -1131,16 +1259,30 @@ function openTopicModal(topicId, sessionIdx) {
       '<button class="btn btn-primary" onclick="saveTopic(\''+esc(topicId||'')+'\','+sessionIdx+')">'+(t?'Save Changes':'Add Topic')+'</button>'+
     '</div>'+
   '</div></div>';
+  setTimeout(()=>{
+    renderPlacementOptions(document.getElementById('m-group')?.value || '', topicId || '');
+    const auto = document.getElementById('m-auto-id');
+    if (auto) auto.checked = false;
+  },0);
 }
 
 function closeModal(){document.getElementById('modal-container').innerHTML=''}
 
 function saveTopic(editId, sessionIdx) {
-  const newId = document.getElementById('m-id').value.trim();
+  const idInput = document.getElementById('m-id');
+  const selectedGroup = document.getElementById('m-group')?.value || '';
+  const afterId = document.getElementById('m-place-after')?.value || '';
+  const autoId = !!document.getElementById('m-auto-id')?.checked;
+  let newId = idInput.value.trim();
   const title = document.getElementById('m-title').value.trim();
   const errEl = document.getElementById('m-id-err');
-  if (!newId||!title){if(errEl)errEl.textContent='ID and Title are required.';return}
-  if (newId!==editId && topics[newId]) {if(errEl)errEl.textContent='That ID is already taken.';return}
+  if (!title){if(errEl)errEl.textContent='Title is required.';return}
+  if (autoId && selectedGroup) {
+    previewTopicIdFromPlacement();
+    newId = idInput.value.trim();
+  }
+  if (!newId){if(errEl)errEl.textContent='Topic ID is required.';return}
+  if (!autoId && newId!==editId && topics[newId]) {if(errEl)errEl.textContent='That ID is already taken.';return}
   const existing = editId ? topics[editId] : {};
   const updated = {
     id: newId, title,
@@ -1150,13 +1292,17 @@ function saveTopic(editId, sessionIdx) {
     evidence: document.getElementById('m-ev').value.trim(),
     fileLinks: existing.fileLinks || [],
   };
-  // If ID changed, update all schedule references
-  if (editId && newId !== editId) {
-    delete topics[editId];
-    schedule.forEach(s=>{if(s.topicIds){const i=s.topicIds.indexOf(editId);if(i>-1)s.topicIds[i]=newId;}});
+
+  if (autoId && selectedGroup) {
+    applySequentialTopicPlacement(editId || null, updated, selectedGroup, afterId);
+  } else {
+    if (editId && newId !== editId) {
+      delete topics[editId];
+      schedule.forEach(s=>{if(s.topicIds){s.topicIds=s.topicIds.map(id=>id===editId?newId:id);}});
+    }
+    topics[newId] = updated;
   }
-  topics[newId] = updated;
-  closeModal(); render(); saveAllData();
+  closeModal(); render(); renderRefGroups(); saveAllData();
 }
 function deleteTopic(id){
   if(!confirm('Delete '+id+'?'))return;
@@ -1189,29 +1335,21 @@ function removeSessLink(idx,fi){if(schedule[idx]?.fileLinks)schedule[idx].fileLi
 // ════════════════════════════════
 // CATALOGUE
 // ════════════════════════════════
-function renderCatalogue(c) {
-  const allIds = Object.keys(topics).sort();
+function getFilteredCatalogueIds() {
+  const allIds = Object.keys(topics).sort(topicIdCompare);
   let filtered = allIds;
   if (catIdSearch){const s=catIdSearch.toLowerCase();filtered=filtered.filter(id=>id.toLowerCase().includes(s))}
-  if (catSearch){const s=catSearch.toLowerCase();filtered=filtered.filter(id=>{const t=topics[id];return t.title.toLowerCase().includes(s)||t.description.toLowerCase().includes(s)||t.outcomes.toLowerCase().includes(s)||t.evidence.toLowerCase().includes(s)})}
+  if (catSearch){const s=catSearch.toLowerCase();filtered=filtered.filter(id=>{const t=topics[id];return (t.title||'').toLowerCase().includes(s)||(t.description||'').toLowerCase().includes(s)||(t.outcomes||'').toLowerCase().includes(s)||(t.evidence||'').toLowerCase().includes(s)})}
   if (catLean!=='all') filtered=filtered.filter(id=>topics[id].lean===catLean);
-
-  let h = '<div class="ctrl-row">'+
-    '<input type="text" placeholder="Filter by Topic ID (ex: SPALD, K1-03)..." value="'+esc(catIdSearch)+'" oninput="catIdSearch=this.value;render()" style="width:240px;min-width:180px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
-    '<input type="text" placeholder="Search title, description, outcomes, evidence..." value="'+esc(catSearch)+'" oninput="catSearch=this.value;render()" style="flex:1;min-width:220px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
-    '<select onchange="catLean=this.value;render()" style="padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
-      '<option value="all">All Leans</option>'+
-      '<option value="Technical"'+(catLean==='Technical'?' selected':'')+'>Technical</option>'+
-      '<option value="Pedagogical"'+(catLean==='Pedagogical'?' selected':'')+'>Pedagogical</option>'+
-      '<option value="Blended"'+(catLean==='Blended'?' selected':'')+'>Blended</option>'+
-    '</select>'+
-    '<span style="font-size:11px;color:var(--secondary)">'+filtered.length+' topics</span>'+
-  '</div>';
-
-  h += '<div style="overflow-x:auto"><table class="cat-table"><thead><tr>'+
-    '<th>ID</th><th>Title</th><th>Lean</th><th>Description</th><th>Learning Outcomes</th><th>Evidence Base</th><th>Assigned</th><th></th>'+
-    '</tr></thead><tbody>';
-
+  return filtered;
+}
+function renderCatalogueRows() {
+  const tbody = document.getElementById('cat-table-body');
+  const count = document.getElementById('cat-count');
+  if (!tbody) return;
+  const filtered = getFilteredCatalogueIds();
+  if (count) count.textContent = filtered.length + ' topics';
+  let h = '';
   filtered.forEach(id => {
     const t=topics[id];const uses=getTopicUsage(id);
     const usageHtml=uses.length>0
@@ -1228,8 +1366,29 @@ function renderCatalogue(c) {
       '<td><button class="btn btn-sm" onclick="openTopicModal(\''+id+'\')">Edit</button></td>'+
     '</tr>';
   });
-  h += '</tbody></table></div>';
+  tbody.innerHTML = h;
+}
+function renderCatalogue(c) {
+  let h = '<div class="ctrl-row">'+
+    '<input id="cat-id-filter" type="text" placeholder="Filter by Topic ID (ex: SPALD, K1-03)..." value="'+esc(catIdSearch)+'" style="width:240px;min-width:180px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+    '<input id="cat-text-filter" type="text" placeholder="Search title, description, outcomes, evidence..." value="'+esc(catSearch)+'" style="flex:1;min-width:220px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+    '<select id="cat-lean-filter" style="padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+      '<option value="all">All Leans</option>'+
+      '<option value="Technical"'+(catLean==='Technical'?' selected':'')+'>Technical</option>'+
+      '<option value="Pedagogical"'+(catLean==='Pedagogical'?' selected':'')+'>Pedagogical</option>'+
+      '<option value="Blended"'+(catLean==='Blended'?' selected':'')+'>Blended</option>'+
+    '</select>'+
+    '<span id="cat-count" style="font-size:11px;color:var(--secondary)"></span>'+
+  '</div>';
+
+  h += '<div style="overflow-x:auto"><table class="cat-table"><thead><tr>'+
+    '<th>ID</th><th>Title</th><th>Lean</th><th>Description</th><th>Learning Outcomes</th><th>Evidence Base</th><th>Assigned</th><th></th>'+
+    '</tr></thead><tbody id="cat-table-body"></tbody></table></div>';
   c.innerHTML = h;
+  document.getElementById('cat-id-filter').addEventListener('input', e=>{catIdSearch=e.target.value;renderCatalogueRows();});
+  document.getElementById('cat-text-filter').addEventListener('input', e=>{catSearch=e.target.value;renderCatalogueRows();});
+  document.getElementById('cat-lean-filter').addEventListener('change', e=>{catLean=e.target.value;renderCatalogueRows();});
+  renderCatalogueRows();
 }
 
 // ════════════════════════════════
