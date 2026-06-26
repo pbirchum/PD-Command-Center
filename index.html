@@ -27,17 +27,19 @@ input,textarea,select{font-family:var(--font)}
 ::-webkit-scrollbar-thumb{background:var(--secondary);border-radius:4px}
 
 /* ── App shell: side-by-side ref panel + main ── */
-#app-shell{display:flex;min-height:100vh;transition:all .25s}
-#main-shell{flex:1;min-width:0;display:flex;flex-direction:column;transition:all .25s}
+#app-shell{display:flex;height:100vh;overflow:hidden;transition:all .25s}
+#main-shell{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:all .25s}
 
 /* ── Reference Panel ── */
 #ref-panel{
-  width:0;overflow:hidden;background:var(--navy);border-right:1px solid var(--card-border);
+  width:0;height:100vh;overflow:hidden;background:var(--navy);border-right:1px solid var(--card-border);
   transition:width .25s;flex-shrink:0;display:flex;flex-direction:column;
 }
 #ref-panel.open{width:var(--ref-width)}
-#ref-panel-inner{width:var(--ref-width);padding:16px;overflow-y:auto;flex:1}
-#ref-panel h3{color:var(--cyan);font-size:13px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+#ref-panel-inner{width:var(--ref-width);height:100vh;padding:0;overflow-y:auto;overflow-x:hidden;flex:1}
+#ref-panel h3{color:var(--cyan);font-size:13px;font-weight:700;margin:0 0 12px 0;padding:16px 16px 10px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--navy);z-index:5;border-bottom:1px solid var(--card-border)}
+#ref-groups-list{padding:0 16px}
+#ref-panel-inner>div:last-child{padding-left:16px!important;padding-right:16px!important}
 .ref-group{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:6px}
 .ref-group-prefix{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:2px;display:flex;justify-content:space-between;align-items:center}
 .ref-group-name{font-size:11px;color:var(--muted)}
@@ -788,7 +790,7 @@ function deleteGroup(pfx) {
 let currentTab = 'schedule';
 let schFilter = {school:'all', quarter:'all'};
 let kbFilter = {school:'all'};
-let catSearch = '', catLean = 'all';
+let catSearch = '', catIdSearch = '', catLean = 'all';
 let poolFmt = 'all';
 let evSearch = '';
 
@@ -1190,11 +1192,13 @@ function removeSessLink(idx,fi){if(schedule[idx]?.fileLinks)schedule[idx].fileLi
 function renderCatalogue(c) {
   const allIds = Object.keys(topics).sort();
   let filtered = allIds;
-  if (catSearch){const s=catSearch.toLowerCase();filtered=filtered.filter(id=>{const t=topics[id];return id.toLowerCase().includes(s)||t.title.toLowerCase().includes(s)||t.description.toLowerCase().includes(s)||t.outcomes.toLowerCase().includes(s)})}
+  if (catIdSearch){const s=catIdSearch.toLowerCase();filtered=filtered.filter(id=>id.toLowerCase().includes(s))}
+  if (catSearch){const s=catSearch.toLowerCase();filtered=filtered.filter(id=>{const t=topics[id];return t.title.toLowerCase().includes(s)||t.description.toLowerCase().includes(s)||t.outcomes.toLowerCase().includes(s)||t.evidence.toLowerCase().includes(s)})}
   if (catLean!=='all') filtered=filtered.filter(id=>topics[id].lean===catLean);
 
   let h = '<div class="ctrl-row">'+
-    '<input type="text" placeholder="Search topics..." value="'+catSearch+'" oninput="catSearch=this.value;render()" style="flex:1;min-width:180px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+    '<input type="text" placeholder="Filter by Topic ID (ex: SPALD, K1-03)..." value="'+esc(catIdSearch)+'" oninput="catIdSearch=this.value;render()" style="width:240px;min-width:180px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
+    '<input type="text" placeholder="Search title, description, outcomes, evidence..." value="'+esc(catSearch)+'" oninput="catSearch=this.value;render()" style="flex:1;min-width:220px;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
     '<select onchange="catLean=this.value;render()" style="padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px">'+
       '<option value="all">All Leans</option>'+
       '<option value="Technical"'+(catLean==='Technical'?' selected':'')+'>Technical</option>'+
