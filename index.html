@@ -511,6 +511,10 @@ async function saveAllData() {
     return;
   }
   try {
+    // IMPORTANT: Do not use { merge: true } here.
+    // This app stores the whole shared state in one Firestore document.
+    // Using merge preserves deleted nested map keys, which means deleted topics/groups can reappear.
+    // A full set overwrites topics, schedule, and topicGroups so deletes and prefix renames persist correctly.
     await stateRef.set({
       topics: cloneForFirestore(topics),
       schedule: cloneForFirestore(schedule),
@@ -521,7 +525,7 @@ async function saveAllData() {
         email: auth.currentUser.email || '',
         displayName: auth.currentUser.displayName || ''
       }
-    }, { merge: true });
+    });
   } catch (err) {
     console.error('Firestore save failed:', err);
     alert('Your change was made on this page, but it did not save to Firestore. ' + (err.message || 'Check your internet connection, Firebase config, and Firestore rules.'));
