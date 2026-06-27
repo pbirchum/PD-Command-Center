@@ -116,6 +116,24 @@ input,textarea,select{font-family:var(--font)}
 .empty-slot{color:var(--secondary);font-size:10px;font-style:italic;opacity:.4}
 .special-row{padding:8px 14px;font-size:12px;font-weight:600;text-align:center;border-radius:4px;margin:2px 0}
 .slot-remove{display:none;cursor:pointer;font-size:11px;color:#e74c3c;margin-left:1px;opacity:.6}
+
+/* ── Recommendation helper ── */
+.school-col{position:relative;padding-right:32px}
+.rec-btn{position:absolute;top:4px;right:4px;width:23px;height:23px;border-radius:999px;border:1px solid rgba(82,201,231,.35);background:rgba(82,201,231,.12);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer;transition:all .15s;z-index:2}
+.rec-btn:hover{background:rgba(82,201,231,.25);border-color:var(--cyan);transform:scale(1.05)}
+.rec-section{margin-top:12px}
+.rec-section h3{font-size:12px;color:var(--cyan);margin:0 0 7px 0}
+.rec-card{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:var(--radius);padding:9px 10px;margin-bottom:6px}
+.rec-card.used{opacity:.55}
+.rec-title{font-size:12px;font-weight:600;color:var(--white);margin-bottom:3px}
+.rec-meta{font-size:10px;color:var(--secondary);line-height:1.4;margin-bottom:6px}
+.rec-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.rec-pill{display:inline-block;font-size:9px;border-radius:999px;padding:1px 6px;background:rgba(82,201,231,.12);color:var(--cyan);margin-right:4px}
+.rec-editor-card{background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:var(--radius);padding:10px;margin-bottom:8px}
+.rec-editor-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.rec-editor-grid select,.rec-editor-grid input{width:100%;padding:6px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px}
+@media(max-width:1100px){.rec-editor-grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+
 .school-col:hover .slot-remove{display:inline}
 .slot-remove:hover{opacity:1}
 .fmt-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -234,6 +252,7 @@ input,textarea,select{font-family:var(--font)}
       <button class="nav-tab" data-tab="kanban">Build Tracker</button>
       <button class="nav-tab" data-tab="catalogue">Topic Catalogue</button>
       <button class="nav-tab" data-tab="evidence">Evidence Base</button>
+      <button class="nav-tab" data-tab="recommendations">Recommendations</button>
     </div>
     <div class="main" id="main-content"></div>
   </div>
@@ -299,6 +318,1747 @@ const firebaseConfig = {
 const DEFAULT_TOPICS = JSON.parse(JSON.stringify(topics));
 const DEFAULT_SCHEDULE = JSON.parse(JSON.stringify(schedule));
 const DEFAULT_TOPIC_GROUPS = JSON.parse(JSON.stringify(topicGroups));
+const recommendationPools = {
+  "Lower|live|Q1": {
+    "id": "Lower|live|Q1",
+    "label": "Q1 — Foundation & Setting the Baseline (3 sessions: W1 Aug 21, W4 Sep 11, W7 Oct 2)  ·  Set up the year. Lower Live (All-School) brings K-5 teachers into the same room, so topics are universal or have clear K-2 vs 3-5 framing. K-2 students don't use headsets; 3rd starts mid-year (Q3); 4th-5th use VR throughout. Builds toward Q1 VR Showcase (Oct 9). NOTE: at this stage of the year, K-2 teachers should be establishing experiential learning routines while 3-5 teachers prepare for VR use.",
+    "school": "Lower",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q1",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "LOW-04",
+        "title": "Building a K-5 Continuum: How Experiential Learning Becomes VR Learning"
+      },
+      {
+        "id": "LOW-06",
+        "title": "Differentiating for the Range in Every Lower Classroom"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      },
+      {
+        "id": "K1-05",
+        "title": "Routines, Transitions, and Behavior Foundations for Earliest Learners"
+      },
+      {
+        "id": "BL-01",
+        "title": "Design Thinking for Lesson Design"
+      },
+      {
+        "id": "LOW-05",
+        "title": "Documentation Practices Across K-5: Capturing What Students Did"
+      }
+    ],
+    "topicIds": [
+      "LOW-04",
+      "LOW-06",
+      "VR-P04",
+      "K1-05",
+      "BL-01",
+      "LOW-05"
+    ]
+  },
+  "Lower|live|Q2": {
+    "id": "Lower|live|Q2",
+    "label": "Q2 — Refinement, Documentation & Cross-Grade Coherence (2 sessions: W12 Nov 6, W15 Dec 4)  ·  Deepen documentation practices, build cross-grade coherence, and prepare for the Q2 VR Showcase + Christmas Party (Dec 18). Documentation and family communication work for K-5 alike.",
+    "school": "Lower",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q2",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "LOW-05",
+        "title": "Documentation Practices Across K-5: Capturing What Students Did"
+      },
+      {
+        "id": "BL-02",
+        "title": "Cognitive Load and Lesson Pacing in Immersive Environments"
+      },
+      {
+        "id": "K1-08",
+        "title": "Family Communication in K-2: Building Trust Around School Experiences"
+      },
+      {
+        "id": "LOW-04",
+        "title": "Building a K-5 Continuum: How Experiential Learning Becomes VR Learning"
+      },
+      {
+        "id": "BL-03",
+        "title": "Live Showcase Prep & Peer Critique Protocols"
+      }
+    ],
+    "topicIds": [
+      "LOW-05",
+      "BL-02",
+      "K1-08",
+      "LOW-04",
+      "BL-03"
+    ]
+  },
+  "Lower|live|Q3": {
+    "id": "Lower|live|Q3",
+    "label": "Q3 — AI for Teachers & 3rd-Grade VR Launch (2 sessions: W19 Jan 15, W23 Feb 12)  ·  Cycle 2 begins. AI for teacher workflows is the universal Q3 anchor — works for K-5 teachers equally. Q3 is also when 3rd grade launches student VR use, so G23-05 (3rd-grade VR onboarding) is on the menu even though it's grade-specific. Builds toward Q3 VR Showcase (Mar 5).",
+    "school": "Lower",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q3",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "AI-P01",
+        "title": "Ethical AI Use: A Classroom Framework"
+      },
+      {
+        "id": "AI-T03",
+        "title": "AI Prompt Design for Teachers"
+      },
+      {
+        "id": "G23-05",
+        "title": "Preparing 3rd Grade for Q3 VR Launch (3-5 Group)"
+      },
+      {
+        "id": "VR-P05",
+        "title": "Conducting Classroom Action Research on Your VR Practice"
+      }
+    ],
+    "topicIds": [
+      "AI-T01",
+      "AI-P01",
+      "AI-T03",
+      "G23-05",
+      "VR-P05"
+    ]
+  },
+  "Lower|live|Q4": {
+    "id": "Lower|live|Q4",
+    "label": "Q4 — Synthesis, Showcase, and Closing Out (1 session: W28 Mar 19)  ·  Lower has one Live (All-School) slot in Q4. Use it to anchor showcase prep and end-of-year reflection. The three closeout weeks (W34-W36) are all-faculty, not school-specific.",
+    "school": "Lower",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q4",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "BL-03",
+        "title": "Live Showcase Prep & Peer Critique Protocols"
+      },
+      {
+        "id": "BL-04",
+        "title": "Closing the Loop: Year-End Reflection & Lesson Archiving"
+      },
+      {
+        "id": "LOW-04",
+        "title": "Building a K-5 Continuum: How Experiential Learning Becomes VR Learning"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "LOW-06",
+        "title": "Differentiating for the Range in Every Lower Classroom"
+      }
+    ],
+    "topicIds": [
+      "BL-03",
+      "BL-04",
+      "LOW-04",
+      "AI-P02",
+      "LOW-06"
+    ]
+  },
+  "Middle|live|Q1": {
+    "id": "Middle|live|Q1",
+    "label": "Q1 — Foundation & Frameworks (2 sessions: W3 Sep 4, W6 Sep 25)  ·  Set the design baseline. Introduce SAMR/TPACK/PICRAT vocabulary. Establish cognitive-load awareness early so it informs the year's design choices. Builds toward Q1 VR Showcase (Oct 9).",
+    "school": "Middle",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q1",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      },
+      {
+        "id": "VR-P03",
+        "title": "Universal Design for Learning in Spatial Computing"
+      },
+      {
+        "id": "VR-T04",
+        "title": "Building Interactive Lessons: Triggers, Logic, and Student Choice"
+      },
+      {
+        "id": "BL-01",
+        "title": "Design Thinking for Lesson Design"
+      },
+      {
+        "id": "BL-02",
+        "title": "Cognitive Load and Lesson Pacing in Immersive Environments"
+      }
+    ],
+    "topicIds": [
+      "VR-T01",
+      "VR-P04",
+      "VR-P03",
+      "VR-T04",
+      "BL-01",
+      "BL-02"
+    ]
+  },
+  "Middle|live|Q2": {
+    "id": "Middle|live|Q2",
+    "label": "Q2 — Interactivity & Content Depth (2 sessions: W11 Oct 30, W14 Nov 20)  ·  Push past 'walk and look.' Introduce interactivity, agency, and the first asset-creation work. Prep for Q2 VR Showcase + Christmas Party (Dec 18).",
+    "school": "Middle",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q2",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "VR-T04",
+        "title": "Building Interactive Lessons: Triggers, Logic, and Student Choice"
+      },
+      {
+        "id": "VR-P02",
+        "title": "Designing for Student Agency in Immersive Space"
+      },
+      {
+        "id": "VR-T02",
+        "title": "3D Asset Creation with Blender — Foundations"
+      },
+      {
+        "id": "VR-P06",
+        "title": "Content-Specific Pedagogy in Virtual Space — Foundations"
+      },
+      {
+        "id": "BL-03",
+        "title": "Live Showcase Prep & Peer Critique Protocols"
+      }
+    ],
+    "topicIds": [
+      "VR-T04",
+      "VR-P02",
+      "VR-T02",
+      "VR-P06",
+      "BL-03"
+    ]
+  },
+  "Middle|live|Q3": {
+    "id": "Middle|live|Q3",
+    "label": "Q3 — AI Integration, Assessment, and Inquiry (3 sessions: W18 Jan 8, W22 Feb 5, W25 Feb 26)  ·  Cycle 2 begins. AI lesson planning, classroom AI policy, prompt design, and assessment design. Lay the inquiry groundwork via action research. Builds toward Q3 VR Showcase (Mar 5).",
+    "school": "Middle",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q3",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "AI-P01",
+        "title": "Ethical AI Use: A Classroom Framework"
+      },
+      {
+        "id": "AI-T03",
+        "title": "AI Prompt Design for Teachers"
+      },
+      {
+        "id": "VR-P01",
+        "title": "Assessment in Spatial Computing: Capturing What Students Did"
+      },
+      {
+        "id": "VR-P05",
+        "title": "Conducting Classroom Action Research on Your VR Practice"
+      },
+      {
+        "id": "BL-02",
+        "title": "Cognitive Load and Lesson Pacing in Immersive Environments"
+      }
+    ],
+    "topicIds": [
+      "AI-T01",
+      "AI-P01",
+      "AI-T03",
+      "VR-P01",
+      "VR-P05",
+      "BL-02"
+    ]
+  },
+  "Middle|live|Q4": {
+    "id": "Middle|live|Q4",
+    "label": "Q4 — No Live (All-School) sessions in Q4  ·  Middle School has no Live (All-School) slots in Q4 per the v2 schedule. Topics listed here are reference-only — useful for closeout week (W34-W36) planning or for moving into Cycle 1 of the following year.",
+    "school": "Middle",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q4",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "VR-T05",
+        "title": "Desktop and Hybrid Delivery: Designing for Mixed-Modality Classrooms"
+      },
+      {
+        "id": "BL-03",
+        "title": "Live Showcase Prep & Peer Critique Protocols"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "VR-P02",
+        "title": "Designing for Student Agency in Immersive Space"
+      },
+      {
+        "id": "BL-04",
+        "title": "Closing the Loop: Year-End Reflection & Lesson Archiving"
+      }
+    ],
+    "topicIds": [
+      "VR-T05",
+      "BL-03",
+      "AI-P02",
+      "VR-P02",
+      "BL-04"
+    ]
+  },
+  "High|live|Q1": {
+    "id": "High|live|Q1",
+    "label": "Q1 — Foundation & Frameworks (2 sessions: W2 Aug 28, W5 Sep 18)  ·  High school's AI initiative makes early AI policy work essential. Combine with environment-design baseline and framework vocabulary. Builds toward Q1 VR Showcase (Oct 9).",
+    "school": "High",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q1",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      },
+      {
+        "id": "AI-P01",
+        "title": "Ethical AI Use: A Classroom Framework"
+      },
+      {
+        "id": "VR-P03",
+        "title": "Universal Design for Learning in Spatial Computing"
+      },
+      {
+        "id": "BL-01",
+        "title": "Design Thinking for Lesson Design"
+      },
+      {
+        "id": "BL-02",
+        "title": "Cognitive Load and Lesson Pacing in Immersive Environments"
+      }
+    ],
+    "topicIds": [
+      "VR-T01",
+      "VR-P04",
+      "AI-P01",
+      "VR-P03",
+      "BL-01",
+      "BL-02"
+    ]
+  },
+  "High|live|Q2": {
+    "id": "High|live|Q2",
+    "label": "Q2 — Interactivity, Agency, and AI in Writing/Research (3 sessions: W10 Oct 23, W13 Nov 13, W16 Dec 11)  ·  Push interactivity and student agency. High school-specific AI work: AI-resistant assignment design, AI-as-research-assistant patterns. Prep for Q2 VR Showcase + Christmas Party (Dec 18).",
+    "school": "High",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q2",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "VR-T04",
+        "title": "Building Interactive Lessons: Triggers, Logic, and Student Choice"
+      },
+      {
+        "id": "VR-P02",
+        "title": "Designing for Student Agency in Immersive Space"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "VR-P06",
+        "title": "Content-Specific Pedagogy in Virtual Space — Foundations"
+      },
+      {
+        "id": "BL-03",
+        "title": "Live Showcase Prep & Peer Critique Protocols"
+      }
+    ],
+    "topicIds": [
+      "VR-T04",
+      "VR-P02",
+      "AI-P02",
+      "VR-P06",
+      "BL-03"
+    ]
+  },
+  "High|live|Q3": {
+    "id": "High|live|Q3",
+    "label": "Q3 — AI Literacy for Students, Assessment, and Inquiry (2 sessions: W21 Jan 29, W24 Feb 19)  ·  Cycle 2 begins. AI literacy as a *student-facing* topic — teachers learn to teach it. Pair with assessment redesign and action research. Builds toward Q3 VR Showcase (Mar 5).",
+    "school": "High",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q3",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AI-P03",
+        "title": "Teaching Students AI Literacy: A Practical Roadmap"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "AI-T03",
+        "title": "AI Prompt Design for Teachers"
+      },
+      {
+        "id": "VR-P01",
+        "title": "Assessment in Spatial Computing: Capturing What Students Did"
+      },
+      {
+        "id": "VR-P05",
+        "title": "Conducting Classroom Action Research on Your VR Practice"
+      },
+      {
+        "id": "AI-T02",
+        "title": "AI for Formative Assessment and Feedback"
+      }
+    ],
+    "topicIds": [
+      "AI-P03",
+      "AI-T01",
+      "AI-T03",
+      "VR-P01",
+      "VR-P05",
+      "AI-T02"
+    ]
+  },
+  "High|live|Q4": {
+    "id": "High|live|Q4",
+    "label": "Q4 — No Live (All-School) sessions in Q4  ·  High School has no Live (All-School) slots in Q4 per the v2 schedule. Topics listed here are reference-only — useful for closeout weeks (W34-W36) or for moving into Cycle 1 of the following year.",
+    "school": "High",
+    "family": "live",
+    "subject": "",
+    "audience": "",
+    "quarter": "Q4",
+    "cycle": "",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AI-T04",
+        "title": "Spatial Computing + AI: Where VR and AI Meet"
+      },
+      {
+        "id": "VR-T05",
+        "title": "Desktop and Hybrid Delivery: Designing for Mixed-Modality Classrooms"
+      },
+      {
+        "id": "BL-03",
+        "title": "Live Showcase Prep & Peer Critique Protocols"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "BL-04",
+        "title": "Closing the Loop: Year-End Reflection & Lesson Archiving"
+      }
+    ],
+    "topicIds": [
+      "AI-T04",
+      "VR-T05",
+      "BL-03",
+      "AI-P02",
+      "BL-04"
+    ]
+  },
+  "Lower|subject|K-2|Cycle 1": {
+    "id": "Lower|subject|K-2|Cycle 1",
+    "label": "K-2 Group (Green · Teams w/ Principal) · Cycle 1 Pool (5 Subject Live wks: 2, 5, 10, 13, 16)",
+    "school": "Lower",
+    "family": "subject",
+    "subject": "",
+    "audience": "K-2",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "K1-05",
+        "title": "Routines, Transitions, and Behavior Foundations for Earliest Learners"
+      },
+      {
+        "id": "K1-01",
+        "title": "Designing Hands-On, Real-World Experiential Lessons (K-2)"
+      },
+      {
+        "id": "K1-03",
+        "title": "Teams and 2D Digital Tools That Earn Their Place in K-2"
+      },
+      {
+        "id": "K1-04",
+        "title": "Story-Driven Learning in K-2 (Read-Aloud Without VR)"
+      },
+      {
+        "id": "K2-01",
+        "title": "Spalding Method: Refresher for K-2 Teachers"
+      },
+      {
+        "id": "G23-01",
+        "title": "Experiential and Hands-On Learning for K-2 (Extension)"
+      },
+      {
+        "id": "G23-06",
+        "title": "Cross-Subject Thematic Design for K-2"
+      },
+      {
+        "id": "K1-08",
+        "title": "Family Communication in K-2: Building Trust Around School Experiences"
+      }
+    ],
+    "topicIds": [
+      "K1-05",
+      "K1-01",
+      "K1-03",
+      "K1-04",
+      "K2-01",
+      "G23-01",
+      "G23-06",
+      "K1-08"
+    ]
+  },
+  "Lower|subject|K-2|Cycle 2": {
+    "id": "Lower|subject|K-2|Cycle 2",
+    "label": "K-2 Group (Green · Teams w/ Principal) · Cycle 2 Pool (5 Subject Live wks: 21, 24, 29, 31, 32)",
+    "school": "Lower",
+    "family": "subject",
+    "subject": "",
+    "audience": "K-2",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "K1-02",
+        "title": "Embodied Math and Literacy: Learning Through the Body in K-2"
+      },
+      {
+        "id": "K1-07",
+        "title": "AI for K-2 Teacher Workflows (Planning, Differentiation, Feedback)"
+      },
+      {
+        "id": "K1-06",
+        "title": "Teacher-Projected VR as a Discussion Artifact (K-2)"
+      },
+      {
+        "id": "K2-02",
+        "title": "Spalding Phonogram Instruction: Going Deeper"
+      },
+      {
+        "id": "K2-03",
+        "title": "Integrating Spalding with Real-World Experiential Learning"
+      },
+      {
+        "id": "G23-02",
+        "title": "Building Reading Comprehension Through Concrete Experience (K-2)"
+      },
+      {
+        "id": "G23-03",
+        "title": "Embodied and Manipulative-Based Math for K-2 (Extension)"
+      },
+      {
+        "id": "G23-07",
+        "title": "Age-Appropriate Student Agency in K-2"
+      }
+    ],
+    "topicIds": [
+      "K1-02",
+      "K1-07",
+      "K1-06",
+      "K2-02",
+      "K2-03",
+      "G23-02",
+      "G23-03",
+      "G23-07"
+    ]
+  },
+  "Lower|subject|3-5|Cycle 1": {
+    "id": "Lower|subject|3-5|Cycle 1",
+    "label": "3-5 Group (Blue · VR w/ PD Lead) · Cycle 1 Pool (5 Subject Live wks: 2, 5, 10, 13, 16)",
+    "school": "Lower",
+    "family": "subject",
+    "subject": "",
+    "audience": "3-5",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "G23-05",
+        "title": "Preparing 3rd Grade for Q3 VR Launch (3-5 Group)"
+      },
+      {
+        "id": "G4-01",
+        "title": "Place-Based Social Studies in VR for 4th Grade"
+      },
+      {
+        "id": "G4-03",
+        "title": "Introducing Source Work to 4th Graders in Spatial Space"
+      },
+      {
+        "id": "G5-01",
+        "title": "Argumentation and Evidence in 5th Grade ELA"
+      },
+      {
+        "id": "G5-03",
+        "title": "Student-Created VR Artifacts as Capstone Projects (5th)"
+      },
+      {
+        "id": "AL-03",
+        "title": "Performance and Voice in Lower Elementary Art & Language"
+      },
+      {
+        "id": "AL-02",
+        "title": "World Language Immersion for Young Learners"
+      },
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      }
+    ],
+    "topicIds": [
+      "G23-05",
+      "G4-01",
+      "G4-03",
+      "G5-01",
+      "G5-03",
+      "AL-03",
+      "AL-02",
+      "VR-T01"
+    ]
+  },
+  "Lower|subject|3-5|Cycle 2": {
+    "id": "Lower|subject|3-5|Cycle 2",
+    "label": "3-5 Group (Blue · VR w/ PD Lead) · Cycle 2 Pool (5 Subject Live wks: 21, 24, 29, 31, 32)",
+    "school": "Lower",
+    "family": "subject",
+    "subject": "",
+    "audience": "3-5",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "G4-02",
+        "title": "Fractions and Geometry in Spatial Environments (4th)"
+      },
+      {
+        "id": "G4-04",
+        "title": "Scientific Inquiry and Modeling in VR (4th)"
+      },
+      {
+        "id": "G5-02",
+        "title": "Pre-Algebraic Thinking and Modeling in Spatial Space (5th)"
+      },
+      {
+        "id": "G5-04",
+        "title": "Building 5th-to-6th Bridge Routines"
+      },
+      {
+        "id": "AL-01",
+        "title": "Spatial Art-Making for Elementary Students"
+      },
+      {
+        "id": "AL-04",
+        "title": "Cross-Cultural Exploration in VR for Elementary Students"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "VR-P05",
+        "title": "Conducting Classroom Action Research on Your VR Practice"
+      }
+    ],
+    "topicIds": [
+      "G4-02",
+      "G4-04",
+      "G5-02",
+      "G5-04",
+      "AL-01",
+      "AL-04",
+      "AI-T01",
+      "VR-P05"
+    ]
+  },
+  "Middle|subject|Math|Cycle 1": {
+    "id": "Middle|subject|Math|Cycle 1",
+    "label": "Math (Middle) · Cycle 1 (Wk 1 · Aug 21)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "Math",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "MATH-01",
+        "title": "Algebra and Symbolic Math in Virtual Space: Right Tool, Wrong Tool"
+      },
+      {
+        "id": "MATH-02",
+        "title": "Embodied Mathematics: Manipulatives, Scale, and Spatial Reasoning"
+      },
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "MATH-01",
+      "MATH-02",
+      "VR-T01",
+      "VR-P04"
+    ]
+  },
+  "Middle|subject|Math|Cycle 2": {
+    "id": "Middle|subject|Math|Cycle 2",
+    "label": "Math (Middle) · Cycle 2 (Wk 19 · Jan 15)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "Math",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "MATH-03",
+        "title": "AI for Math Problem Sequencing and Worked Examples"
+      },
+      {
+        "id": "MATH-02",
+        "title": "Embodied Mathematics: Manipulatives, Scale, and Spatial Reasoning"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "VR-P01",
+        "title": "Assessment in Spatial Computing: Capturing What Students Did"
+      }
+    ],
+    "topicIds": [
+      "MATH-03",
+      "MATH-02",
+      "AI-T01",
+      "VR-P01"
+    ]
+  },
+  "Middle|subject|ELA|Cycle 1": {
+    "id": "Middle|subject|ELA|Cycle 1",
+    "label": "ELA (Middle) · Cycle 1 (Wk 4 · Sep 11)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "ELA",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "ELA-01",
+        "title": "Performance, Voice, and Presence: ELA in Spatial Environments"
+      },
+      {
+        "id": "ELA-03",
+        "title": "Building Immersive Literary Environments"
+      },
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "ELA-01",
+      "ELA-03",
+      "VR-T01",
+      "VR-P04"
+    ]
+  },
+  "Middle|subject|ELA|Cycle 2": {
+    "id": "Middle|subject|ELA|Cycle 2",
+    "label": "ELA (Middle) · Cycle 2 (Wk 23 · Feb 12)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "ELA",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "ELA-02",
+        "title": "Writing in the Age of Generative AI: What ELA Teachers Actually Do"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "ELA-01",
+        "title": "Performance, Voice, and Presence: ELA in Spatial Environments"
+      }
+    ],
+    "topicIds": [
+      "ELA-02",
+      "AI-P02",
+      "AI-T01",
+      "ELA-01"
+    ]
+  },
+  "Middle|subject|History|Cycle 1": {
+    "id": "Middle|subject|History|Cycle 1",
+    "label": "History (Middle) · Cycle 1 (Wk 7 · Oct 2)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "History",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "HIS-01",
+        "title": "Place-Based History: Designing Virtual Field Trips That Teach"
+      },
+      {
+        "id": "HIS-02",
+        "title": "Source Work and Document Analysis in Spatial Environments"
+      },
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "HIS-01",
+      "HIS-02",
+      "VR-T01",
+      "VR-P04"
+    ]
+  },
+  "Middle|subject|History|Cycle 2": {
+    "id": "Middle|subject|History|Cycle 2",
+    "label": "History (Middle) · Cycle 2 (Wk 28 · Mar 19)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "History",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "HIS-03",
+        "title": "AI as Historical Thinking Partner — and Where It Fails"
+      },
+      {
+        "id": "HIS-02",
+        "title": "Source Work and Document Analysis in Spatial Environments"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "HIS-01",
+        "title": "Place-Based History: Designing Virtual Field Trips That Teach"
+      }
+    ],
+    "topicIds": [
+      "HIS-03",
+      "HIS-02",
+      "AI-P02",
+      "HIS-01"
+    ]
+  },
+  "Middle|subject|Science|Cycle 1": {
+    "id": "Middle|subject|Science|Cycle 1",
+    "label": "Science (Middle) · Cycle 1 (Wk 12 · Nov 6)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "Science",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "SCI-01",
+        "title": "Active Doing in VR: Designing Inquiry-Based Science Lessons"
+      },
+      {
+        "id": "SCI-02",
+        "title": "Modeling and Scale: Using VR's Unique Affordances in Science"
+      },
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "SCI-01",
+      "SCI-02",
+      "VR-T01",
+      "VR-P04"
+    ]
+  },
+  "Middle|subject|Science|Cycle 2": {
+    "id": "Middle|subject|Science|Cycle 2",
+    "label": "Science (Middle) · Cycle 2 (Wk 30 · Apr 16)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "Science",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "SCI-03",
+        "title": "Lab Safety, Replication, and Procedural Learning in VR"
+      },
+      {
+        "id": "SCI-01",
+        "title": "Active Doing in VR: Designing Inquiry-Based Science Lessons"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "VR-P01",
+        "title": "Assessment in Spatial Computing: Capturing What Students Did"
+      }
+    ],
+    "topicIds": [
+      "SCI-03",
+      "SCI-01",
+      "AI-T01",
+      "VR-P01"
+    ]
+  },
+  "Middle|subject|Lang & Art|Cycle 1": {
+    "id": "Middle|subject|Lang & Art|Cycle 1",
+    "label": "Lang & Art (Middle) · Cycle 1 (Wk 15 · Dec 4)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "Lang & Art",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "LANG-01",
+        "title": "Latin and Classical Languages in Spatial Space"
+      },
+      {
+        "id": "LANG-02",
+        "title": "Modern Language Speaking Practice in VR"
+      },
+      {
+        "id": "LANG-03",
+        "title": "Arts in Spatial Space: Making, Showing, Critiquing"
+      },
+      {
+        "id": "VR-T01",
+        "title": "Environment Design that Does Pedagogical Work"
+      }
+    ],
+    "topicIds": [
+      "LANG-01",
+      "LANG-02",
+      "LANG-03",
+      "VR-T01"
+    ]
+  },
+  "Middle|subject|Lang & Art|Cycle 2": {
+    "id": "Middle|subject|Lang & Art|Cycle 2",
+    "label": "Lang & Art (Middle) · Cycle 2 (Wk 31 · Apr 23)",
+    "school": "Middle",
+    "family": "subject",
+    "subject": "Lang & Art",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "LANG-02",
+        "title": "Modern Language Speaking Practice in VR"
+      },
+      {
+        "id": "LANG-03",
+        "title": "Arts in Spatial Space: Making, Showing, Critiquing"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "VR-P02",
+        "title": "Designing for Student Agency in Immersive Space"
+      }
+    ],
+    "topicIds": [
+      "LANG-02",
+      "LANG-03",
+      "AI-T01",
+      "VR-P02"
+    ]
+  },
+  "High|subject|Math|Cycle 1": {
+    "id": "High|subject|Math|Cycle 1",
+    "label": "Math (High) · Cycle 1 (Wk 3 · Sep 4)",
+    "school": "High",
+    "family": "subject",
+    "subject": "Math",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "MATH-01",
+        "title": "Algebra and Symbolic Math in Virtual Space: Right Tool, Wrong Tool"
+      },
+      {
+        "id": "MATH-02",
+        "title": "Embodied Mathematics: Manipulatives, Scale, and Spatial Reasoning"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      },
+      {
+        "id": "VR-T04",
+        "title": "Building Interactive Lessons: Triggers, Logic, and Student Choice"
+      }
+    ],
+    "topicIds": [
+      "MATH-01",
+      "MATH-02",
+      "VR-P04",
+      "VR-T04"
+    ]
+  },
+  "High|subject|Math|Cycle 2": {
+    "id": "High|subject|Math|Cycle 2",
+    "label": "Math (High) · Cycle 2 (Wk 22 · Feb 5)",
+    "school": "High",
+    "family": "subject",
+    "subject": "Math",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "MATH-03",
+        "title": "AI for Math Problem Sequencing and Worked Examples"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "MATH-02",
+        "title": "Embodied Mathematics: Manipulatives, Scale, and Spatial Reasoning"
+      }
+    ],
+    "topicIds": [
+      "MATH-03",
+      "AI-T01",
+      "AI-P02",
+      "MATH-02"
+    ]
+  },
+  "High|subject|ELA|Cycle 1": {
+    "id": "High|subject|ELA|Cycle 1",
+    "label": "ELA (High) · Cycle 1 (Wk 6 · Sep 25)",
+    "school": "High",
+    "family": "subject",
+    "subject": "ELA",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "ELA-01",
+        "title": "Performance, Voice, and Presence: ELA in Spatial Environments"
+      },
+      {
+        "id": "ELA-03",
+        "title": "Building Immersive Literary Environments"
+      },
+      {
+        "id": "AI-P01",
+        "title": "Ethical AI Use: A Classroom Framework"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "ELA-01",
+      "ELA-03",
+      "AI-P01",
+      "VR-P04"
+    ]
+  },
+  "High|subject|ELA|Cycle 2": {
+    "id": "High|subject|ELA|Cycle 2",
+    "label": "ELA (High) · Cycle 2 (Wk 25 · Feb 26)",
+    "school": "High",
+    "family": "subject",
+    "subject": "ELA",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "ELA-02",
+        "title": "Writing in the Age of Generative AI: What ELA Teachers Actually Do"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "AI-P03",
+        "title": "Teaching Students AI Literacy: A Practical Roadmap"
+      },
+      {
+        "id": "ELA-01",
+        "title": "Performance, Voice, and Presence: ELA in Spatial Environments"
+      }
+    ],
+    "topicIds": [
+      "ELA-02",
+      "AI-P02",
+      "AI-P03",
+      "ELA-01"
+    ]
+  },
+  "High|subject|History|Cycle 1": {
+    "id": "High|subject|History|Cycle 1",
+    "label": "History (High) · Cycle 1 (Wk 11 · Oct 30)",
+    "school": "High",
+    "family": "subject",
+    "subject": "History",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "HIS-01",
+        "title": "Place-Based History: Designing Virtual Field Trips That Teach"
+      },
+      {
+        "id": "HIS-02",
+        "title": "Source Work and Document Analysis in Spatial Environments"
+      },
+      {
+        "id": "AI-P01",
+        "title": "Ethical AI Use: A Classroom Framework"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "HIS-01",
+      "HIS-02",
+      "AI-P01",
+      "VR-P04"
+    ]
+  },
+  "High|subject|History|Cycle 2": {
+    "id": "High|subject|History|Cycle 2",
+    "label": "History (High) · Cycle 2 (Wk 29 · Apr 9)",
+    "school": "High",
+    "family": "subject",
+    "subject": "History",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "HIS-03",
+        "title": "AI as Historical Thinking Partner — and Where It Fails"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "HIS-02",
+        "title": "Source Work and Document Analysis in Spatial Environments"
+      },
+      {
+        "id": "AI-P03",
+        "title": "Teaching Students AI Literacy: A Practical Roadmap"
+      }
+    ],
+    "topicIds": [
+      "HIS-03",
+      "AI-P02",
+      "HIS-02",
+      "AI-P03"
+    ]
+  },
+  "High|subject|Science|Cycle 1": {
+    "id": "High|subject|Science|Cycle 1",
+    "label": "Science (High) · Cycle 1 (Wk 14 · Nov 20)",
+    "school": "High",
+    "family": "subject",
+    "subject": "Science",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "SCI-01",
+        "title": "Active Doing in VR: Designing Inquiry-Based Science Lessons"
+      },
+      {
+        "id": "SCI-02",
+        "title": "Modeling and Scale: Using VR's Unique Affordances in Science"
+      },
+      {
+        "id": "SCI-03",
+        "title": "Lab Safety, Replication, and Procedural Learning in VR"
+      },
+      {
+        "id": "VR-T04",
+        "title": "Building Interactive Lessons: Triggers, Logic, and Student Choice"
+      }
+    ],
+    "topicIds": [
+      "SCI-01",
+      "SCI-02",
+      "SCI-03",
+      "VR-T04"
+    ]
+  },
+  "High|subject|Science|Cycle 2": {
+    "id": "High|subject|Science|Cycle 2",
+    "label": "Science (High) · Cycle 2 (Wk 30 · Apr 16)",
+    "school": "High",
+    "family": "subject",
+    "subject": "Science",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "SCI-03",
+        "title": "Lab Safety, Replication, and Procedural Learning in VR"
+      },
+      {
+        "id": "AI-T04",
+        "title": "Spatial Computing + AI: Where VR and AI Meet"
+      },
+      {
+        "id": "AI-T01",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "SCI-01",
+        "title": "Active Doing in VR: Designing Inquiry-Based Science Lessons"
+      }
+    ],
+    "topicIds": [
+      "SCI-03",
+      "AI-T04",
+      "AI-T01",
+      "SCI-01"
+    ]
+  },
+  "High|subject|Lang & Art|Cycle 1": {
+    "id": "High|subject|Lang & Art|Cycle 1",
+    "label": "Lang & Art (High) · Cycle 1 (Wk 18 · Jan 8)",
+    "school": "High",
+    "family": "subject",
+    "subject": "Lang & Art",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 1",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "LANG-01",
+        "title": "Latin and Classical Languages in Spatial Space"
+      },
+      {
+        "id": "LANG-02",
+        "title": "Modern Language Speaking Practice in VR"
+      },
+      {
+        "id": "LANG-03",
+        "title": "Arts in Spatial Space: Making, Showing, Critiquing"
+      },
+      {
+        "id": "VR-P04",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, and PICRAT"
+      }
+    ],
+    "topicIds": [
+      "LANG-01",
+      "LANG-02",
+      "LANG-03",
+      "VR-P04"
+    ]
+  },
+  "High|subject|Lang & Art|Cycle 2": {
+    "id": "High|subject|Lang & Art|Cycle 2",
+    "label": "Lang & Art (High) · Cycle 2 (Wk 32 · Apr 30)",
+    "school": "High",
+    "family": "subject",
+    "subject": "Lang & Art",
+    "audience": "",
+    "quarter": "",
+    "cycle": "Cycle 2",
+    "category": "",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "LANG-02",
+        "title": "Modern Language Speaking Practice in VR"
+      },
+      {
+        "id": "LANG-01",
+        "title": "Latin and Classical Languages in Spatial Space"
+      },
+      {
+        "id": "AI-P02",
+        "title": "Designing AI-Enhanced and AI-Resistant Assignments"
+      },
+      {
+        "id": "AI-T04",
+        "title": "Spatial Computing + AI: Where VR and AI Meet"
+      }
+    ],
+    "topicIds": [
+      "LANG-02",
+      "LANG-01",
+      "AI-P02",
+      "AI-T04"
+    ]
+  },
+  "Any|async|VR / Spatial Computing — Technical": {
+    "id": "Any|async|VR / Spatial Computing — Technical",
+    "label": "VR / Spatial Computing — Technical",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "VR / Spatial Computing — Technical",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-01",
+        "title": "Advanced Environment Design in VR — Year Over Year"
+      },
+      {
+        "id": "AS-02",
+        "title": "3D Asset Creation with Blender — Foundations"
+      },
+      {
+        "id": "AS-03",
+        "title": "3D Asset Creation with Blender — Optimization & Import"
+      },
+      {
+        "id": "AS-04",
+        "title": "Building Interactive Lessons: IFX, Logic, and Branching"
+      },
+      {
+        "id": "AS-06",
+        "title": "Desktop and Hybrid Delivery in VR"
+      },
+      {
+        "id": "AS-22",
+        "title": "Multimodal Student Creation in VR: Beyond Consumption"
+      },
+      {
+        "id": "AS-27",
+        "title": "Lesson Library Hygiene: Organizing What You've Built"
+      },
+      {
+        "id": "AS-30",
+        "title": "Bringing Returning Teachers Up to Speed on a New VR Platform"
+      }
+    ],
+    "topicIds": [
+      "AS-01",
+      "AS-02",
+      "AS-03",
+      "AS-04",
+      "AS-06",
+      "AS-22",
+      "AS-27",
+      "AS-30"
+    ]
+  },
+  "Any|async|VR / Spatial Computing — Pedagogical": {
+    "id": "Any|async|VR / Spatial Computing — Pedagogical",
+    "label": "VR / Spatial Computing — Pedagogical",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "VR / Spatial Computing — Pedagogical",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-05",
+        "title": "VR Assessment Design"
+      },
+      {
+        "id": "AS-10",
+        "title": "Universal Design for Learning in a Spatial Computing School"
+      },
+      {
+        "id": "AS-13",
+        "title": "Content-Specific Pedagogy in Virtual Space"
+      },
+      {
+        "id": "AS-14",
+        "title": "Designing for Student Agency in VR"
+      },
+      {
+        "id": "AS-16",
+        "title": "Classroom Management in Immersive Environments"
+      },
+      {
+        "id": "AS-18",
+        "title": "VR for Neurodivergent Learners: Design Moves That Work"
+      },
+      {
+        "id": "AS-24",
+        "title": "Auditing Your Own VR Practice: A Self-Review Module"
+      },
+      {
+        "id": "AS-28",
+        "title": "When VR Is the Wrong Tool: A Design Decision Module"
+      }
+    ],
+    "topicIds": [
+      "AS-05",
+      "AS-10",
+      "AS-13",
+      "AS-14",
+      "AS-16",
+      "AS-18",
+      "AS-24",
+      "AS-28"
+    ]
+  },
+  "Any|async|AI — Applied Use Cases": {
+    "id": "Any|async|AI — Applied Use Cases",
+    "label": "AI — Applied Use Cases",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "AI — Applied Use Cases",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-07",
+        "title": "AI for Lesson Planning and Differentiation"
+      },
+      {
+        "id": "AS-08",
+        "title": "AI for Formative Assessment and Feedback"
+      },
+      {
+        "id": "AS-09",
+        "title": "Spatial Computing + AI Integration"
+      },
+      {
+        "id": "AS-29",
+        "title": "AI for Administrative Workload Reduction"
+      }
+    ],
+    "topicIds": [
+      "AS-07",
+      "AS-08",
+      "AS-09",
+      "AS-29"
+    ]
+  },
+  "Any|async|AI — Pedagogical & Student-Facing": {
+    "id": "Any|async|AI — Pedagogical & Student-Facing",
+    "label": "AI — Pedagogical & Student-Facing",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "AI — Pedagogical & Student-Facing",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-15",
+        "title": "Ethical AI Use: A Classroom Framework"
+      },
+      {
+        "id": "AS-19",
+        "title": "Teaching Students Prompting Literacy"
+      },
+      {
+        "id": "AS-20",
+        "title": "AI Output Evaluation: Teaching Students to Critique What AI Gives Them"
+      },
+      {
+        "id": "AS-21",
+        "title": "Student Data Privacy in AI Tools"
+      }
+    ],
+    "topicIds": [
+      "AS-15",
+      "AS-19",
+      "AS-20",
+      "AS-21"
+    ]
+  },
+  "Any|async|Bridging Modules (Technical + Pedagogical)": {
+    "id": "Any|async|Bridging Modules (Technical + Pedagogical)",
+    "label": "Bridging Modules (Technical + Pedagogical)",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "Bridging Modules (Technical + Pedagogical)",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-11",
+        "title": "Technology Integration Frameworks: SAMR, TPACK, PICRAT"
+      },
+      {
+        "id": "AS-12",
+        "title": "Conducting Classroom Research to Back Your Decisions"
+      },
+      {
+        "id": "AS-23",
+        "title": "Co-Teaching and Collaboration in Spatial Environments"
+      },
+      {
+        "id": "AS-25",
+        "title": "Multimodal Storytelling: VR + Audio + Text"
+      }
+    ],
+    "topicIds": [
+      "AS-11",
+      "AS-12",
+      "AS-23",
+      "AS-25"
+    ]
+  },
+  "Any|async|Teacher Practice & Communication": {
+    "id": "Any|async|Teacher Practice & Communication",
+    "label": "Teacher Practice & Communication",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "Teacher Practice & Communication",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-17",
+        "title": "Communicating with Families About VR and AI"
+      },
+      {
+        "id": "AS-26",
+        "title": "Reflective Practice for Teachers: Building a Personal Practice"
+      }
+    ],
+    "topicIds": [
+      "AS-17",
+      "AS-26"
+    ]
+  },
+  "Any|async|K-2 Specialized (Spalding, Experiential, Teams)": {
+    "id": "Any|async|K-2 Specialized (Spalding, Experiential, Teams)",
+    "label": "K-2 Specialized (Spalding, Experiential, Teams)",
+    "school": "Any",
+    "family": "async",
+    "subject": "",
+    "audience": "",
+    "quarter": "",
+    "cycle": "",
+    "category": "K-2 Specialized (Spalding, Experiential, Teams)",
+    "rationale": "Imported from the planning workbook option pool.",
+    "items": [
+      {
+        "id": "AS-31",
+        "title": "Spalding Refresher (Self-Paced)"
+      },
+      {
+        "id": "AS-32",
+        "title": "Hands-On Experiential Learning Library for K-2"
+      },
+      {
+        "id": "AS-33",
+        "title": "Teams Workflows for K-2 Classrooms"
+      }
+    ],
+    "topicIds": [
+      "AS-31",
+      "AS-32",
+      "AS-33"
+    ]
+  }
+};
+const DEFAULT_RECOMMENDATION_POOLS = JSON.parse(JSON.stringify(recommendationPools));
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -474,6 +2234,7 @@ async function seedFirestoreIfEmpty() {
       topics: DEFAULT_TOPICS,
       schedule: DEFAULT_SCHEDULE,
       topicGroups: DEFAULT_TOPIC_GROUPS,
+      recommendationPools: DEFAULT_RECOMMENDATION_POOLS,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -486,7 +2247,11 @@ function applyRemoteState(data) {
   replaceObjectContents(topics, data.topics || {});
   replaceArrayContents(schedule, data.schedule || []);
   replaceObjectContents(topicGroups, data.topicGroups || {});
+  const needsRecommendationPoolBackfill = !data.recommendationPools || Object.keys(data.recommendationPools || {}).length === 0;
+  replaceObjectContents(recommendationPools, data.recommendationPools || DEFAULT_RECOMMENDATION_POOLS);
+  const poolsNormalized = normalizeRecommendationPoolTopicIds();
   isApplyingRemoteState = false;
+  if ((needsRecommendationPoolBackfill || poolsNormalized) && auth.currentUser) setTimeout(() => saveAllData(), 50);
   hasLoadedRemoteState = true;
   renderRefGroups();
   render();
@@ -521,6 +2286,7 @@ async function saveAllData() {
       topics: cloneForFirestore(topics),
       schedule: cloneForFirestore(schedule),
       topicGroups: cloneForFirestore(topicGroups),
+      recommendationPools: cloneForFirestore(recommendationPools),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: {
         uid: auth.currentUser.uid,
@@ -812,6 +2578,10 @@ function saveGroup(editPfx) {
     schedule.forEach(s => {
       if (s.topicIds) s.topicIds = s.topicIds.map(id => renameMap[id] || id);
     });
+    Object.values(recommendationPools).forEach(pool => {
+      if (pool.topicIds) pool.topicIds = pool.topicIds.map(id => renameMap[id] || id);
+      if (pool.items) pool.items.forEach(item => { if (renameMap[item.id]) item.id = renameMap[item.id]; });
+    });
     delete topicGroups[editPfx];
   }
 
@@ -834,7 +2604,7 @@ let catSearch = '', catIdSearch = '', catLean = 'all', catSchool = 'all';
 let poolFmt = 'all', poolSchool = 'all';
 let evSearch = '';
 
-const VALID_TABS = ['schedule','kanban','catalogue','evidence'];
+const VALID_TABS = ['schedule','kanban','catalogue','evidence','recommendations'];
 function getTabFromLocation() {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab') || (window.location.hash ? window.location.hash.replace('#','') : '');
@@ -866,6 +2636,7 @@ function render() {
   else if (currentTab==='kanban') renderKanban(c);
   else if (currentTab==='catalogue') renderCatalogue(c);
   else if (currentTab==='evidence') renderEvidence(c);
+  else if (currentTab==='recommendations') renderRecommendationsTab(c);
   updateBadges();
 }
 
@@ -969,8 +2740,9 @@ function renderSchedule(c) {
       if (colName==='Lower'&&entries.length>1) {
         h += '<div style="display:flex;flex-direction:column;gap:1px">';
         entries.forEach(entry => {
-          const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt);
+          const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt); const recBtn=recommendationButtonHtml(idx);
           h += '<div class="school-col" data-idx="'+idx+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onSDIdx(event)" style="min-height:38px">'+
+            recBtn+
             '<div class="stype-lbl" style="color:'+col+'">'+entry.school+' · '+entry.sessionType+'</div>'+
             '<div class="slot-content">';
           if (entry.topicIds&&entry.topicIds.length>0) {
@@ -983,8 +2755,8 @@ function renderSchedule(c) {
         h += '<div class="school-col" data-week="'+wk+'" data-col="'+colName+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onSD(event)">';
         if (entries.length===0) { h+='<span class="empty-slot">—</span>'; }
         else { entries.forEach(entry=>{
-          const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt);
-          h+='<div style="margin-bottom:3px"><div class="stype-lbl" style="color:'+col+'">'+(entry.school!==colName?entry.school+' · ':'')+entry.sessionType+'</div><div class="slot-content">';
+          const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt); const recBtn=recommendationButtonHtml(idx);
+          h+='<div style="margin-bottom:3px;position:relative;padding-right:28px">'+recBtn+'<div class="stype-lbl" style="color:'+col+'">'+(entry.school!==colName?entry.school+' · ':'')+entry.sessionType+'</div><div class="slot-content">';
           if(entry.topicIds&&entry.topicIds.length>0){entry.topicIds.forEach(tid=>{h+=topicTagHtml(tid,false,idx)+'<span class="slot-remove" onclick="event.stopPropagation();rmSlot('+idx+',\''+tid+'\')" title="Remove">×</span> '})}
           else{h+='<span class="empty-slot">no topic</span>'}
           h+='</div></div>';
@@ -1445,6 +3217,285 @@ function renderCatalogue(c) {
   renderCatalogueRows();
 }
 
+
+// ════════════════════════════════
+// RECOMMENDATION HELPER
+// ════════════════════════════════
+let recFilter = {school:'all', family:'all', text:''};
+
+function scheduleSupportsRecommendations(entry) {
+  if (!entry) return false;
+  const fmt = getFormat(entry.sessionType, entry.school);
+  const sg = getSchoolGroup(entry.school);
+  if (sg === 'New Tchrs' || sg === 'New K-2') return false;
+  return ['live','subject','async'].includes(fmt);
+}
+function recommendationButtonHtml(idx) {
+  return scheduleSupportsRecommendations(schedule[idx]) ? '<button class="rec-btn" title="Recommend topics" onclick="event.stopPropagation();openRecommendationsModal('+idx+')">💡</button>' : '';
+}
+
+function normalizeFamilyForRecommendation(fmt) {
+  if (fmt === 'subject') return 'subject';
+  if (fmt === 'async') return 'async';
+  if (fmt === 'live') return 'live';
+  return fmt;
+}
+function normalizeSubjectName(value) {
+  const s = (value || '').toLowerCase();
+  if (s.includes('math')) return 'Math';
+  if (s.includes('ela')) return 'ELA';
+  if (s.includes('history')) return 'History';
+  if (s.includes('science')) return 'Science';
+  if (s.includes('lang') || s.includes('art')) return 'Lang & Art';
+  return '';
+}
+function getScheduleContext(entry) {
+  const fmt = getFormat(entry.sessionType, entry.school);
+  const family = normalizeFamilyForRecommendation(fmt);
+  const schoolGroup = getSchoolGroup(entry.school);
+  const stype = entry.sessionType || '';
+  let subject = normalizeSubjectName(stype);
+  let audience = '';
+  const schoolLower = (entry.school || '').toLowerCase();
+  if (schoolLower.includes('k-2')) audience = 'K-2';
+  else if (schoolLower.includes('3-5') || schoolLower.includes('3–5')) audience = '3-5';
+  const quarter = getQuarter(entry.week);
+  const cycle = entry.week <= 17 ? 'Cycle 1' : 'Cycle 2';
+  return {idx:schedule.indexOf(entry), week:entry.week, date:entry.date, school:entry.school, schoolGroup, family, subject, audience, quarter, cycle, sessionType:entry.sessionType};
+}
+function poolMatchesContext(pool, ctx, exact=true) {
+  if (!pool || !ctx) return false;
+  if (pool.family && pool.family !== ctx.family) return false;
+  if (pool.family !== 'async') {
+    if (pool.school && pool.school !== 'Any' && pool.school !== ctx.schoolGroup) return false;
+  }
+  if (exact) {
+    if (pool.quarter && pool.quarter !== ctx.quarter) return false;
+    if (pool.cycle && pool.cycle !== ctx.cycle) return false;
+    if (pool.subject && pool.subject !== ctx.subject) return false;
+    if (pool.audience && pool.audience !== ctx.audience) return false;
+  }
+  return true;
+}
+function normalizeRecommendationPoolTopicIds() {
+  let changed = false;
+  Object.values(recommendationPools).forEach(pool => {
+    const sourceItems = pool.items && pool.items.length ? pool.items : (pool.topicIds || []).map(id => ({id, title:topics[id]?.title || ''}));
+    pool.items = sourceItems.map(item => {
+      const resolved = resolvePoolTopicId(item);
+      if (resolved && resolved !== item.id) changed = true;
+      return {id: resolved || item.id || '', title: (topics[resolved]?.title || item.title || '')};
+    }).filter(item => item.id);
+    const newIds = pool.items.map(item => item.id);
+    if (JSON.stringify(pool.topicIds || []) !== JSON.stringify(newIds)) changed = true;
+    pool.topicIds = newIds;
+  });
+  return changed;
+}
+function resolvePoolTopicId(itemOrId) {
+  const item = typeof itemOrId === 'string' ? {id:itemOrId,title:''} : (itemOrId || {});
+  if (item.id && topics[item.id]) return item.id;
+  const title = (item.title || '').trim().toLowerCase();
+  if (title) {
+    const found = Object.values(topics).find(t => (t.title || '').trim().toLowerCase() === title);
+    if (found) return found.id;
+  }
+  return item.id || '';
+}
+function schoolUsedTopic(schoolGroup, topicId, ignoreIdx, allowAsyncRepeat) {
+  if (allowAsyncRepeat) return null;
+  for (let i=0;i<schedule.length;i++) {
+    if (i === ignoreIdx) continue;
+    const s = schedule[i];
+    if (getSchoolGroup(s.school) !== schoolGroup) continue;
+    if (s.topicIds && s.topicIds.includes(topicId)) return {idx:i, week:s.week, school:s.school, sessionType:s.sessionType};
+  }
+  return null;
+}
+function getEligibleFallbackTopics(ctx) {
+  const fmt = ctx.family;
+  return Object.keys(topics).filter(id => topicFmt(id) === fmt && topicMatchesSchoolFilter(id, ctx.schoolGroup)).sort(topicIdCompare).map(id => ({id, title:topics[id].title || ''}));
+}
+function collectRecommendationItemsForEntry(idx) {
+  const entry = schedule[idx];
+  const ctx = getScheduleContext(entry);
+  const exactPools = Object.values(recommendationPools).filter(p => poolMatchesContext(p, ctx, true));
+  let pools = exactPools;
+  if (!pools.length) pools = Object.values(recommendationPools).filter(p => poolMatchesContext(p, ctx, false));
+  if (ctx.family === 'async') pools = Object.values(recommendationPools).filter(p => p.family === 'async');
+
+  const seen = new Set();
+  const available = [], hidden = [];
+  const allowAsyncRepeat = ctx.family === 'async';
+  pools.forEach(pool => {
+    const items = pool.items || (pool.topicIds || []).map(id => ({id, title:(topics[id]?.title || '')}));
+    items.forEach(raw => {
+      const id = resolvePoolTopicId(raw);
+      if (!id || !topics[id] || seen.has(id)) return;
+      seen.add(id);
+      const used = schoolUsedTopic(ctx.schoolGroup, id, idx, allowAsyncRepeat);
+      const rec = {id, title:topics[id].title || raw.title || '', pool, used, why:buildRecommendationWhy(ctx, pool, id)};
+      if (used) hidden.push(rec); else available.push(rec);
+    });
+  });
+  if (available.length < 3) {
+    getEligibleFallbackTopics(ctx).forEach(raw => {
+      const id = resolvePoolTopicId(raw);
+      if (!id || !topics[id] || seen.has(id)) return;
+      seen.add(id);
+      const used = schoolUsedTopic(ctx.schoolGroup, id, idx, allowAsyncRepeat);
+      const rec = {id, title:topics[id].title || '', pool:null, used, why:'Fallback match: correct school tag and PD format for this block.'};
+      if (used) hidden.push(rec); else available.push(rec);
+    });
+  }
+  return {ctx, exactPools, pools, available, hidden};
+}
+function buildRecommendationWhy(ctx, pool, id) {
+  const bits = [];
+  if (pool) {
+    if (pool.school && pool.school !== 'Any') bits.push(pool.school + ' School');
+    if (pool.quarter) bits.push(pool.quarter);
+    if (pool.cycle) bits.push(pool.cycle);
+    if (pool.subject) bits.push(pool.subject);
+    if (pool.audience) bits.push(pool.audience);
+    if (pool.category) bits.push(pool.category);
+  }
+  if (!bits.length) bits.push('eligible match');
+  return 'Fits this block because it matches ' + bits.join(' · ') + '.';
+}
+function recommendationCardHtml(rec, idx, used=false) {
+  const t = topics[rec.id];
+  const poolLabel = rec.pool ? rec.pool.label : 'Fallback option';
+  return '<div class="rec-card '+(used?'used':'')+'">'+
+    '<div class="rec-title"><span style="color:var(--cyan);font-weight:700">'+esc(rec.id)+'</span> — '+esc(t?.title || rec.title || '')+'</div>'+ 
+    '<div class="rec-meta"><span class="rec-pill">'+esc(topicFmt(rec.id))+'</span><span class="rec-pill">'+esc(topicSchoolTags(rec.id).join(' + '))+'</span>'+esc(poolLabel)+'<br>'+esc(rec.why || '')+(rec.used?'<br>Already used: '+esc(rec.used.school)+' W'+rec.used.week+' · '+esc(rec.used.sessionType):'')+'</div>'+ 
+    '<div class="rec-actions">'+
+      (used ? '' : '<button class="btn btn-sm btn-primary" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',false)">Add to Slot</button><button class="btn btn-sm" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',true)">Replace Slot</button>')+
+      '<button class="btn btn-sm" onclick="openTopicModal(\''+esc(rec.id)+'\','+idx+')">View Details</button>'+ 
+    '</div></div>';
+}
+function openRecommendationsModal(idx) {
+  const entry = schedule[idx]; if (!entry) return;
+  const data = collectRecommendationItemsForEntry(idx);
+  const ctx = data.ctx;
+  const mc = document.getElementById('modal-container');
+  const available = data.available.slice(0, ctx.family==='async' ? 12 : 8);
+  const setIds = available.slice(0,3).map(r=>r.id);
+  let h = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:760px">'+
+    '<h2>💡 Recommended Topics</h2>'+ 
+    '<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">W'+ctx.week+' · '+esc(entry.date)+' · '+esc(entry.school)+' · '+esc(entry.sessionType)+'</div>'+ 
+    '<div style="font-size:11px;color:var(--secondary);line-height:1.5;margin-bottom:12px">Recommendations come from curated planning pools, then remove topics already used by this school for non-async blocks. Async blocks allow repeats because principals may assign choice sets.</div>';
+  if (ctx.family === 'async' && setIds.length) {
+    h += '<div class="rec-card" style="border-color:rgba(82,201,231,.35)"><div class="rec-title">Suggested async set</div><div class="rec-meta">Adds the first three available recommendations to this async block.</div><div class="rec-actions"><button class="btn btn-sm btn-primary" onclick="addRecommendationSet('+idx+','+JSON.stringify(setIds).replace(/"/g,'&quot;')+',false)">Add Suggested Set</button><button class="btn btn-sm" onclick="addRecommendationSet('+idx+','+JSON.stringify(setIds).replace(/"/g,'&quot;')+',true)">Replace with Suggested Set</button></div></div>';
+  }
+  h += '<div class="rec-section"><h3>Best matches</h3>';
+  h += available.length ? available.map(r=>recommendationCardHtml(r,idx,false)).join('') : '<div style="font-size:12px;color:var(--secondary)">No available recommendations found for this block.</div>';
+  h += '</div>';
+  if (data.hidden.length) {
+    h += '<details class="rec-section"><summary style="font-size:12px;color:var(--secondary);cursor:pointer">Hidden because already used by this school ('+data.hidden.length+')</summary>'+data.hidden.map(r=>recommendationCardHtml(r,idx,true)).join('')+'</details>';
+  }
+  h += '<div class="modal-actions"><button class="btn" onclick="closeModal()">Close</button></div></div></div>';
+  mc.innerHTML = h;
+}
+function addRecommendedTopic(idx, id, replace) {
+  const entry = schedule[idx]; if (!entry || !topics[id]) return;
+  if (replace) entry.topicIds = [];
+  if (!entry.topicIds) entry.topicIds = [];
+  if (!entry.topicIds.includes(id)) entry.topicIds.push(id);
+  if (entry.status === 'Unassigned') entry.status = 'Planning';
+  closeModal(); render(); saveAllData();
+}
+function addRecommendationSet(idx, ids, replace) {
+  const entry = schedule[idx]; if (!entry) return;
+  if (replace) entry.topicIds = [];
+  if (!entry.topicIds) entry.topicIds = [];
+  ids.forEach(id => { if (topics[id] && !entry.topicIds.includes(id)) entry.topicIds.push(id); });
+  if (entry.status === 'Unassigned') entry.status = 'Planning';
+  closeModal(); render(); saveAllData();
+}
+function renderRecommendationsTab(c) {
+  const pools = Object.values(recommendationPools).sort((a,b)=>(a.school+a.family+a.label).localeCompare(b.school+b.family+b.label));
+  let filtered = pools;
+  if (recFilter.school !== 'all') filtered = filtered.filter(p => p.school === recFilter.school || p.school === 'Any');
+  if (recFilter.family !== 'all') filtered = filtered.filter(p => p.family === recFilter.family);
+  if (recFilter.text) {
+    const s = recFilter.text.toLowerCase();
+    filtered = filtered.filter(p => (p.id+' '+p.label+' '+(p.subject||'')+' '+(p.audience||'')+' '+(p.category||'')+' '+(p.topicIds||[]).join(' ')).toLowerCase().includes(s));
+  }
+  let h = '<div class="ctrl-row">'+
+    '<select id="rec-school-filter"><option value="all">All Schools</option><option value="Lower">Lower</option><option value="Middle">Middle</option><option value="High">High</option><option value="Any">Any / Async</option></select>'+ 
+    '<select id="rec-family-filter"><option value="all">All Formats</option><option value="live">Live All-School</option><option value="subject">Subject Live</option><option value="async">Async</option></select>'+ 
+    '<input id="rec-text-filter" placeholder="Search pools or topic IDs..." value="'+esc(recFilter.text)+'" style="min-width:240px">'+ 
+    '<button class="btn btn-primary" onclick="openRecommendationPoolModal(null)">+ New Recommendation Pool</button>'+ 
+    '<span style="font-size:11px;color:var(--secondary)">'+filtered.length+' pools</span>'+ 
+  '</div>'+
+  '<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">These pools power the 💡 recommendation button in the schedule. Edit a pool to change what stakeholders see for that school, format, subject, quarter, or cycle.</div>';
+  filtered.forEach(p => {
+    const ids = (p.topicIds || []).filter(id=>id);
+    h += '<div class="rec-editor-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+      '<div><div style="font-size:12px;font-weight:700;color:var(--cyan)">'+esc(p.label || p.id)+'</div>'+ 
+      '<div style="font-size:10px;color:var(--secondary);margin-top:2px">'+esc([p.school,p.family,p.subject,p.audience,p.quarter,p.cycle,p.category].filter(Boolean).join(' · '))+'</div></div>'+ 
+      '<div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="openRecommendationPoolModal(\''+esc(p.id)+'\')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteRecommendationPool(\''+esc(p.id)+'\')">Delete</button></div>'+ 
+      '</div><div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px">'+ids.map(id=>topics[id]?topicTagHtml(id,false):'<span class="topic-tag" style="opacity:.5">'+esc(id)+'</span>').join('')+'</div></div>';
+  });
+  c.innerHTML = h;
+  document.getElementById('rec-school-filter').value = recFilter.school;
+  document.getElementById('rec-family-filter').value = recFilter.family;
+  document.getElementById('rec-school-filter').addEventListener('change', e=>{recFilter.school=e.target.value;renderRecommendationsTab(c);});
+  document.getElementById('rec-family-filter').addEventListener('change', e=>{recFilter.family=e.target.value;renderRecommendationsTab(c);});
+  document.getElementById('rec-text-filter').addEventListener('input', e=>{recFilter.text=e.target.value;renderRecommendationsTab(c);});
+}
+function openRecommendationPoolModal(poolId) {
+  const p = poolId ? recommendationPools[poolId] : {id:'',label:'',school:'Lower',family:'live',subject:'',audience:'',quarter:'',cycle:'',category:'',rationale:'',topicIds:[]};
+  const ids = (p.topicIds || []).join('\n');
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:700px">'+
+    '<h2>'+(poolId?'Edit':'New')+' Recommendation Pool</h2>'+ 
+    '<label>Pool ID</label><input id="rp-id" value="'+esc(p.id)+'" '+(poolId?'readonly style="opacity:.65"':'')+' placeholder="Lower|live|Q1">'+ 
+    '<div class="modal-grid">'+
+      '<div><label>Label</label><input id="rp-label" value="'+esc(p.label||'')+'"></div>'+ 
+      '<div><label>School</label><select id="rp-school">'+['Lower','Middle','High','Any'].map(v=>'<option value="'+v+'" '+(p.school===v?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+ 
+      '<div><label>Format</label><select id="rp-family">'+['live','subject','async'].map(v=>'<option value="'+v+'" '+(p.family===v?'selected':'')+'>'+fmtLabel(v)+'</option>').join('')+'</select></div>'+ 
+      '<div><label>Subject</label><select id="rp-subject"><option value="">None</option>'+['Math','ELA','History','Science','Lang & Art'].map(v=>'<option value="'+v+'" '+(p.subject===v?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+ 
+      '<div><label>Audience</label><select id="rp-audience"><option value="">None</option>'+['K-2','3-5'].map(v=>'<option value="'+v+'" '+(p.audience===v?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+ 
+      '<div><label>Quarter</label><select id="rp-quarter"><option value="">Any</option>'+['Q1','Q2','Q3','Q4'].map(v=>'<option value="'+v+'" '+(p.quarter===v?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+ 
+      '<div><label>Cycle</label><select id="rp-cycle"><option value="">Any</option>'+['Cycle 1','Cycle 2'].map(v=>'<option value="'+v+'" '+(p.cycle===v?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+ 
+      '<div class="full"><label>Category</label><input id="rp-category" value="'+esc(p.category||'')+'"></div>'+ 
+      '<div class="full"><label>Rationale / guidance note</label><textarea id="rp-rationale" style="min-height:55px">'+esc(p.rationale||'')+'</textarea></div>'+ 
+      '<div class="full"><label>Topic IDs, one per line or separated by commas</label><textarea id="rp-topicids" style="min-height:120px;font-family:monospace">'+esc(ids)+'</textarea><div style="font-size:10px;color:var(--secondary);margin-top:4px">Tip: use current topic IDs. If you later rename a topic group prefix, the site updates these IDs automatically.</div></div>'+ 
+    '</div>'+ 
+    '<div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveRecommendationPool(\''+(poolId?esc(poolId):'')+'\')">Save Pool</button></div>'+ 
+  '</div></div>';
+}
+function saveRecommendationPool(oldId) {
+  const id = document.getElementById('rp-id').value.trim();
+  if (!id) { alert('Pool ID is required.'); return; }
+  if (!oldId && recommendationPools[id]) { alert('That pool ID already exists.'); return; }
+  const topicIds = document.getElementById('rp-topicids').value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);
+  const items = topicIds.map(id => ({id, title:topics[id]?.title || ''}));
+  if (oldId && oldId !== id) delete recommendationPools[oldId];
+  recommendationPools[id] = {
+    id,
+    label: document.getElementById('rp-label').value.trim() || id,
+    school: document.getElementById('rp-school').value,
+    family: document.getElementById('rp-family').value,
+    subject: document.getElementById('rp-subject').value,
+    audience: document.getElementById('rp-audience').value,
+    quarter: document.getElementById('rp-quarter').value,
+    cycle: document.getElementById('rp-cycle').value,
+    category: document.getElementById('rp-category').value.trim(),
+    rationale: document.getElementById('rp-rationale').value.trim(),
+    topicIds,
+    items
+  };
+  closeModal(); render(); saveAllData();
+}
+function deleteRecommendationPool(id) {
+  if (!confirm('Delete recommendation pool "'+id+'"?')) return;
+  delete recommendationPools[id];
+  render(); saveAllData();
+}
+
 // ════════════════════════════════
 // EVIDENCE BASE TAB
 // ════════════════════════════════
@@ -1482,10 +3533,11 @@ function updateBadges(){
   const tabs=document.querySelectorAll('.nav-tab');
   const active=schedule.filter(s=>s.topicIds&&s.topicIds.length>0&&s.status!=='Unassigned').length;
   const evCount=Object.keys(buildEvidenceMap()).length;
-  tabs[0].innerHTML='Schedule <span class="badge">'+schedule.length+'</span>';
-  tabs[1].innerHTML='Build Tracker <span class="badge">'+active+'</span>';
-  tabs[2].innerHTML='Topic Catalogue <span class="badge">'+Object.keys(topics).length+'</span>';
-  tabs[3].innerHTML='Evidence Base <span class="badge">'+evCount+'</span>';
+  if (tabs[0]) tabs[0].innerHTML='Schedule <span class="badge">'+schedule.length+'</span>';
+  if (tabs[1]) tabs[1].innerHTML='Build Tracker <span class="badge">'+active+'</span>';
+  if (tabs[2]) tabs[2].innerHTML='Topic Catalogue <span class="badge">'+Object.keys(topics).length+'</span>';
+  if (tabs[3]) tabs[3].innerHTML='Evidence Base <span class="badge">'+evCount+'</span>';
+  if (tabs[4]) tabs[4].innerHTML='Recommendations <span class="badge">'+Object.keys(recommendationPools).length+'</span>';
 }
 
 initFirebaseAuth();
