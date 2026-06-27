@@ -118,8 +118,9 @@ input,textarea,select{font-family:var(--font)}
 .slot-remove{display:none;cursor:pointer;font-size:11px;color:#e74c3c;margin-left:1px;opacity:.6}
 
 /* ── Recommendation helper ── */
-.school-col{position:relative;padding-right:32px}
-.rec-btn{position:absolute;top:4px;right:4px;width:23px;height:23px;border-radius:999px;border:1px solid rgba(82,201,231,.35);background:rgba(82,201,231,.12);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer;transition:all .15s;z-index:2}
+.school-col{position:relative}
+.slot-card{position:relative;min-height:34px;padding-right:34px}
+.rec-btn{position:absolute;top:6px;right:6px;width:23px;height:23px;border-radius:999px;border:1px solid rgba(82,201,231,.35);background:rgba(82,201,231,.12);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer;transition:background .15s,border-color .15s,transform .15s;z-index:2}
 .rec-btn:hover{background:rgba(82,201,231,.25);border-color:var(--cyan);transform:scale(1.05)}
 .rec-section{margin-top:12px}
 .rec-section h3{font-size:12px;color:var(--cyan);margin:0 0 7px 0}
@@ -2741,7 +2742,7 @@ function renderSchedule(c) {
         h += '<div style="display:flex;flex-direction:column;gap:1px">';
         entries.forEach(entry => {
           const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt); const recBtn=recommendationButtonHtml(idx);
-          h += '<div class="school-col" data-idx="'+idx+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onSDIdx(event)" style="min-height:38px">'+
+          h += '<div class="school-col slot-card" data-idx="'+idx+'" ondragover="onDO(event)" ondragleave="onDL(event)" ondrop="onSDIdx(event)" style="min-height:38px">'+
             recBtn+
             '<div class="stype-lbl" style="color:'+col+'">'+entry.school+' · '+entry.sessionType+'</div>'+
             '<div class="slot-content">';
@@ -2756,7 +2757,7 @@ function renderSchedule(c) {
         if (entries.length===0) { h+='<span class="empty-slot">—</span>'; }
         else { entries.forEach(entry=>{
           const idx=entry._idx; const fmt=getFormat(entry.sessionType,entry.school); const col=fmtColor(fmt); const recBtn=recommendationButtonHtml(idx);
-          h+='<div style="margin-bottom:3px;position:relative;padding-right:28px">'+recBtn+'<div class="stype-lbl" style="color:'+col+'">'+(entry.school!==colName?entry.school+' · ':'')+entry.sessionType+'</div><div class="slot-content">';
+          h+='<div class="slot-card" style="margin-bottom:3px">'+recBtn+'<div class="stype-lbl" style="color:'+col+'">'+(entry.school!==colName?entry.school+' · ':'')+entry.sessionType+'</div><div class="slot-content">';
           if(entry.topicIds&&entry.topicIds.length>0){entry.topicIds.forEach(tid=>{h+=topicTagHtml(tid,false,idx)+'<span class="slot-remove" onclick="event.stopPropagation();rmSlot('+idx+',\''+tid+'\')" title="Remove">×</span> '})}
           else{h+='<span class="empty-slot">no topic</span>'}
           h+='</div></div>';
@@ -3070,6 +3071,7 @@ function openTopicModal(topicId, sessionIdx) {
     '</div>'+
     sessionSection +
     '<div class="modal-actions">'+
+      (activeRecommendationReturnIdx !== null ? '<button class="btn" onclick="openRecommendationsModal('+activeRecommendationReturnIdx+')">← Back to Recommendations</button>' : '')+
       '<button class="btn" onclick="closeModal()">Close</button>'+
       (t ? '<button class="btn btn-danger" onclick="deleteTopic(\''+esc(t.id)+'\' )">Delete</button>' : '')+
       '<button class="btn btn-primary" onclick="saveTopic(\''+esc(topicId||'')+'\','+sessionIdx+')">'+(t?'Save Changes':'Add Topic')+'</button>'+
@@ -3082,7 +3084,7 @@ function openTopicModal(topicId, sessionIdx) {
   },0);
 }
 
-function closeModal(){document.getElementById('modal-container').innerHTML=''}
+function closeModal(){activeRecommendationReturnIdx=null;document.getElementById('modal-container').innerHTML=''}
 
 function saveTopic(editId, sessionIdx) {
   const idInput = document.getElementById('m-id');
@@ -3222,6 +3224,7 @@ function renderCatalogue(c) {
 // RECOMMENDATION HELPER
 // ════════════════════════════════
 let recFilter = {school:'all', family:'all', text:''};
+let activeRecommendationReturnIdx = null;
 
 function scheduleSupportsRecommendations(entry) {
   if (!entry) return false;
@@ -3231,7 +3234,10 @@ function scheduleSupportsRecommendations(entry) {
   return ['live','subject','async'].includes(fmt);
 }
 function recommendationButtonHtml(idx) {
-  return scheduleSupportsRecommendations(schedule[idx]) ? '<button class="rec-btn" title="Recommend topics" onclick="event.stopPropagation();openRecommendationsModal('+idx+')">💡</button>' : '';
+  const entry = schedule[idx];
+  if (!scheduleSupportsRecommendations(entry)) return '';
+  if (entry.topicIds && entry.topicIds.length > 0) return '';
+  return '<button class="rec-btn" title="Recommend topics" onclick="event.stopPropagation();openRecommendationsModal('+idx+')">💡</button>';
 }
 
 function normalizeFamilyForRecommendation(fmt) {
@@ -3371,10 +3377,15 @@ function recommendationCardHtml(rec, idx, used=false) {
     '<div class="rec-meta"><span class="rec-pill">'+esc(topicFmt(rec.id))+'</span><span class="rec-pill">'+esc(topicSchoolTags(rec.id).join(' + '))+'</span>'+esc(poolLabel)+'<br>'+esc(rec.why || '')+(rec.used?'<br>Already used: '+esc(rec.used.school)+' W'+rec.used.week+' · '+esc(rec.used.sessionType):'')+'</div>'+ 
     '<div class="rec-actions">'+
       (used ? '' : '<button class="btn btn-sm btn-primary" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',false)">Add to Slot</button><button class="btn btn-sm" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',true)">Replace Slot</button>')+
-      '<button class="btn btn-sm" onclick="openTopicModal(\''+esc(rec.id)+'\','+idx+')">View Details</button>'+ 
+      '<button class="btn btn-sm" onclick="openTopicFromRecommendation(\''+esc(rec.id)+'\','+idx+')">View Details</button>'+ 
     '</div></div>';
 }
+function openTopicFromRecommendation(topicId, idx) {
+  activeRecommendationReturnIdx = idx;
+  openTopicModal(topicId, idx);
+}
 function openRecommendationsModal(idx) {
+  activeRecommendationReturnIdx = null;
   const entry = schedule[idx]; if (!entry) return;
   const data = collectRecommendationItemsForEntry(idx);
   const ctx = data.ctx;
