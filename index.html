@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OptimaEd PD Command Center — 2026–27</title>
+<title>PD Planner Tool</title>
 <style>
 :root {
   --navy:#06385D;--navy-deep:#042740;--navy-mid:#0a4a78;
@@ -219,10 +219,12 @@ input,textarea,select{font-family:var(--font)}
 .sl-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
 
 .hidden{display:none!important}
+body.auth-locked #app-shell{pointer-events:none;user-select:none}
+#auth-gate-overlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:var(--navy-deep);padding:24px}
 @media(max-width:900px){.kanban-board{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
-<body>
+<body class="auth-locked">
 
 <div id="app-shell">
   <!-- Reference Panel (pushes content) -->
@@ -240,8 +242,7 @@ input,textarea,select{font-family:var(--font)}
   <div id="main-shell">
     <div class="header">
       <div class="header-left">
-        <div class="header-logo">🦉</div>
-        <h1>PD Command Center <span>· 2026–27</span></h1>
+        <h1>PD Planner Tool</h1>
       </div>
       <div class="header-actions">
         <button class="btn btn-ref" id="ref-btn" onclick="toggleRefPanel()">📖 Group Key</button>
@@ -252,7 +253,6 @@ input,textarea,select{font-family:var(--font)}
       <button class="nav-tab active" data-tab="schedule">Schedule</button>
       <button class="nav-tab" data-tab="kanban">Build Tracker</button>
       <button class="nav-tab" data-tab="catalogue">Topic Catalogue</button>
-      <button class="nav-tab" data-tab="evidence">Evidence Base</button>
       <button class="nav-tab" data-tab="recommendations">Recommendations</button>
     </div>
     <div class="main" id="main-content"></div>
@@ -2125,15 +2125,30 @@ function updateAuthUI() {
   }
 }
 
+function setAuthLocked(locked) {
+  document.body.classList.toggle('auth-locked', locked);
+  const appShell = document.getElementById('app-shell');
+  if (appShell) {
+    if (locked) appShell.setAttribute('inert', '');
+    else appShell.removeAttribute('inert');
+  }
+  if (!locked) {
+    const gate = document.getElementById('auth-gate-overlay');
+    if (gate) gate.remove();
+  }
+}
+
 function renderAuthGate(detail) {
-  const c = document.getElementById('main-content');
-  if (!c) return;
+  setAuthLocked(true);
+  const container = document.getElementById('modal-container');
+  if (!container) return;
   const detailHtml = detail ? '<pre style="white-space:pre-wrap;margin-top:10px;padding:12px;background:rgba(0,0,0,.25);border:1px solid var(--card-border);border-radius:6px;color:var(--label);font-size:11px;line-height:1.45;max-width:900px">'+esc(detail)+'</pre>' : '';
-  c.innerHTML = '<div style="max-width:620px;margin:42px auto;padding:24px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-lg);text-align:center">'+
-    '<div style="font-size:18px;font-weight:700;color:var(--cyan);margin-bottom:8px">Sign in required</div>'+
-    '<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px">Use your Microsoft account to open the shared PD Command Center. Once signed in, changes save to Firestore and update live for other signed-in users.</div>'+
-    '<button class="btn btn-primary" onclick="signInWithMicrosoft()">Sign in with Microsoft</button>'+
-    detailHtml+
+  container.innerHTML = '<div id="auth-gate-overlay">'+
+    '<div style="width:min(620px,100%);padding:24px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-lg);text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.45)">'+
+      '<div style="font-size:18px;font-weight:700;color:var(--cyan);margin-bottom:8px">Sign in required</div>'+
+      '<button class="btn btn-primary" onclick="signInWithMicrosoft()">Sign in with Microsoft</button>'+
+      detailHtml+
+    '</div>'+
   '</div>';
 }
 
@@ -2183,6 +2198,7 @@ function initFirebaseAuth() {
       return;
     }
 
+    setAuthLocked(false);
     initFirebaseData();
   }, err => {
     console.error('Auth state error:', err);
@@ -2605,7 +2621,7 @@ let catSearch = '', catIdSearch = '', catLean = 'all', catSchool = 'all';
 let poolFmt = 'all', poolSchool = 'all';
 let evSearch = '';
 
-const VALID_TABS = ['schedule','kanban','catalogue','evidence','recommendations'];
+const VALID_TABS = ['schedule','kanban','catalogue','recommendations'];
 function getTabFromLocation() {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab') || (window.location.hash ? window.location.hash.replace('#','') : '');
@@ -2636,7 +2652,6 @@ function render() {
   if (currentTab==='schedule') renderSchedule(c);
   else if (currentTab==='kanban') renderKanban(c);
   else if (currentTab==='catalogue') renderCatalogue(c);
-  else if (currentTab==='evidence') renderEvidence(c);
   else if (currentTab==='recommendations') renderRecommendationsTab(c);
   updateBadges();
 }
@@ -2695,10 +2710,11 @@ function renderSchedule(c) {
     <select id="pool-school" onchange="poolSchool=this.value;render()">
       <option value="all">Topic Pool: Any School Tag</option><option value="Lower">Lower Topics</option><option value="Middle">Middle Topics</option><option value="High">High Topics</option><option value="All Schools">All-School Topics Only</option>
     </select>
+    <button class="btn btn-sm" onclick="exportSchedule('current')">Export Current View</button>
   </div>
   <div class="topic-pool">
     <div class="pool-hdr">
-      <span>📦 Topic Pool — drag to assign, click to view</span>
+      <span>Topic Pool — drag to assign, click to view</span>
       <div class="pool-filters">
         <button class="pf-btn f-all ${poolFmt==='all'?'active':''}" onclick="poolFmt='all';render()">All</button>
         <button class="pf-btn f-live ${poolFmt==='live'?'active':''}" onclick="poolFmt='live';render()">Live</button>
@@ -2715,7 +2731,7 @@ function renderSchedule(c) {
   h += `</div></div>`;
 
   // Header row
-  h += `<div style="display:grid;grid-template-columns:${gc};gap:1px;margin-bottom:2px;position:sticky;top:0;z-index:5">
+  h += `<div style="display:grid;grid-template-columns:${gc};gap:1px;margin-bottom:2px;position:sticky;top:-18px;z-index:5">
     <div style="background:var(--navy-mid);padding:7px;text-align:center;font-size:11px;font-weight:600;color:var(--cyan)">Week</div>
     ${cols.map(cn=>'<div style="background:var(--navy-mid);padding:7px;text-align:center;font-size:11px;font-weight:600;color:var(--cyan)">'+cn+'</div>').join('')}
   </div>`;
@@ -3073,6 +3089,7 @@ function openTopicModal(topicId, sessionIdx) {
     '<div class="modal-actions">'+
       (activeRecommendationReturnIdx !== null ? '<button class="btn" onclick="openRecommendationsModal('+activeRecommendationReturnIdx+')">← Back to Recommendations</button>' : '')+
       '<button class="btn" onclick="closeModal()">Close</button>'+
+      (t ? '<button class="btn" onclick="exportTopic(\''+esc(t.id)+'\')">Export Topic</button>' : '')+
       (t ? '<button class="btn btn-danger" onclick="deleteTopic(\''+esc(t.id)+'\' )">Delete</button>' : '')+
       '<button class="btn btn-primary" onclick="saveTopic(\''+esc(topicId||'')+'\','+sessionIdx+')">'+(t?'Save Changes':'Add Topic')+'</button>'+
     '</div>'+
@@ -3123,7 +3140,7 @@ function saveTopic(editId, sessionIdx) {
   closeModal(); render(); renderRefGroups(); saveAllData();
 }
 function deleteTopic(id){
-  if(!confirm('Delete '+id+'?'))return;
+  if(!confirm('Delete '+id+'? This will permanently remove the topic from the catalogue and every schedule slot.'))return;
   delete topics[id];
   schedule.forEach(s=>{if(s.topicIds)s.topicIds=s.topicIds.filter(t=>t!==id)});
   closeModal();render(); saveAllData();
@@ -3149,6 +3166,70 @@ function addSessLink(idx,topicId){
   openTopicModal(topicId,idx); saveAllData();
 }
 function removeSessLink(idx,fi){if(schedule[idx]?.fileLinks)schedule[idx].fileLinks.splice(fi,1);render();saveAllData();}
+
+
+function downloadTextFile(filename, text) {
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function topicExportObject(id) {
+  const t = topics[id];
+  if (!t) return null;
+  return {
+    id:t.id,
+    title:t.title,
+    lean:t.lean,
+    schools:topicSchoolTags(id),
+    description:t.description || '',
+    learningOutcomes:t.outcomes || '',
+    evidenceBase:t.evidence || '',
+    fileLinks:t.fileLinks || [],
+    scheduledIn:getTopicUsage(id).map(u=>({week:u.week,date:u.date,school:u.school,sessionType:u.sessionType,status:u.status}))
+  };
+}
+function exportTopic(id) {
+  const data = topicExportObject(id);
+  if (!data) return;
+  downloadTextFile('pd-topic-'+id+'.txt', JSON.stringify(data, null, 2));
+}
+function exportSchedule(mode) {
+  let rows = schedule.slice();
+  let label = 'all';
+  if (mode === 'current') {
+    label = 'current-view';
+    if (schFilter.school !== 'all') rows = rows.filter(s=>getSchoolGroup(s.school)===schFilter.school);
+    if (schFilter.quarter !== 'all') rows = rows.filter(s=>getQuarter(s.week)===schFilter.quarter);
+  } else if (mode === 'school') {
+    label = 'school-'+schFilter.school;
+    if (schFilter.school !== 'all') rows = rows.filter(s=>getSchoolGroup(s.school)===schFilter.school);
+  } else if (mode === 'quarter') {
+    label = 'quarter-'+schFilter.quarter;
+    if (schFilter.quarter !== 'all') rows = rows.filter(s=>getQuarter(s.week)===schFilter.quarter);
+  }
+  const data = rows.map(s=>({
+    week:s.week,
+    date:s.date,
+    school:s.school,
+    sessionType:s.sessionType,
+    status:s.status,
+    notes:s.notes || '',
+    fileLinks:s.fileLinks || [],
+    topics:(s.topicIds || []).map(id=>topicExportObject(id) || {id})
+  }));
+  downloadTextFile('pd-schedule-'+label+'.txt', JSON.stringify({filters:{school:schFilter.school,quarter:schFilter.quarter,mode}, schedule:data}, null, 2));
+}
+function exportCatalogue() {
+  const ids = getFilteredCatalogueIds();
+  const data = ids.map(id=>topicExportObject(id)).filter(Boolean);
+  downloadTextFile('pd-topic-catalogue.txt', JSON.stringify({filters:{id:catIdSearch,text:catSearch,lean:catLean,school:catSchool}, topics:data}, null, 2));
+}
 
 // ════════════════════════════════
 // CATALOGUE
@@ -3205,6 +3286,7 @@ function renderCatalogue(c) {
       '<option value="High"'+(catSchool==='High'?' selected':'')+'>High</option>'+
       '<option value="All Schools"'+(catSchool==='All Schools'?' selected':'')+'>All Schools Only</option>'+
     '</select>'+
+    '<button class="btn btn-sm" onclick="exportCatalogue()">Export Catalogue</button>'+
     '<span id="cat-count" style="font-size:11px;color:var(--secondary)"></span>'+
   '</div>';
 
@@ -3237,7 +3319,7 @@ function recommendationButtonHtml(idx) {
   const entry = schedule[idx];
   if (!scheduleSupportsRecommendations(entry)) return '';
   if (entry.topicIds && entry.topicIds.length > 0) return '';
-  return '<button class="rec-btn" title="Recommend topics" onclick="event.stopPropagation();openRecommendationsModal('+idx+')">💡</button>';
+  return '<button class="rec-btn" title="Recommended Topics" aria-label="Recommended Topics" onclick="event.stopPropagation();openRecommendationsModal('+idx+')">?</button>';
 }
 
 function normalizeFamilyForRecommendation(fmt) {
@@ -3376,7 +3458,7 @@ function recommendationCardHtml(rec, idx, used=false) {
     '<div class="rec-title"><span style="color:var(--cyan);font-weight:700">'+esc(rec.id)+'</span> — '+esc(t?.title || rec.title || '')+'</div>'+ 
     '<div class="rec-meta"><span class="rec-pill">'+esc(topicFmt(rec.id))+'</span><span class="rec-pill">'+esc(topicSchoolTags(rec.id).join(' + '))+'</span>'+esc(poolLabel)+'<br>'+esc(rec.why || '')+(rec.used?'<br>Already used: '+esc(rec.used.school)+' W'+rec.used.week+' · '+esc(rec.used.sessionType):'')+'</div>'+ 
     '<div class="rec-actions">'+
-      (used ? '' : '<button class="btn btn-sm btn-primary" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',false)">Add to Slot</button><button class="btn btn-sm" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',true)">Replace Slot</button>')+
+      (used ? '' : '<button class="btn btn-sm btn-primary" onclick="addRecommendedTopic('+idx+',\''+esc(rec.id)+'\',false)">Add to Slot</button>')+
       '<button class="btn btn-sm" onclick="openTopicFromRecommendation(\''+esc(rec.id)+'\','+idx+')">View Details</button>'+ 
     '</div></div>';
 }
@@ -3393,11 +3475,11 @@ function openRecommendationsModal(idx) {
   const available = data.available.slice(0, ctx.family==='async' ? 12 : 8);
   const setIds = available.slice(0,3).map(r=>r.id);
   let h = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:760px">'+
-    '<h2>💡 Recommended Topics</h2>'+ 
+    '<h2>Recommended Topics</h2>'+ 
     '<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">W'+ctx.week+' · '+esc(entry.date)+' · '+esc(entry.school)+' · '+esc(entry.sessionType)+'</div>'+ 
     '<div style="font-size:11px;color:var(--secondary);line-height:1.5;margin-bottom:12px">Recommendations come from curated planning pools, then remove topics already used by this school for non-async blocks. Async blocks allow repeats because principals may assign choice sets.</div>';
   if (ctx.family === 'async' && setIds.length) {
-    h += '<div class="rec-card" style="border-color:rgba(82,201,231,.35)"><div class="rec-title">Suggested async set</div><div class="rec-meta">Adds the first three available recommendations to this async block.</div><div class="rec-actions"><button class="btn btn-sm btn-primary" onclick="addRecommendationSet('+idx+','+JSON.stringify(setIds).replace(/"/g,'&quot;')+',false)">Add Suggested Set</button><button class="btn btn-sm" onclick="addRecommendationSet('+idx+','+JSON.stringify(setIds).replace(/"/g,'&quot;')+',true)">Replace with Suggested Set</button></div></div>';
+    h += '<div class="rec-card" style="border-color:rgba(82,201,231,.35)"><div class="rec-title">Suggested async set</div><div class="rec-meta">Adds the first three available recommendations to this async block.</div><div class="rec-actions"><button class="btn btn-sm btn-primary" onclick="addRecommendationSet('+idx+','+JSON.stringify(setIds).replace(/"/g,'&quot;')+',false)">Add Suggested Set</button></div></div>';
   }
   h += '<div class="rec-section"><h3>Best matches</h3>';
   h += available.length ? available.map(r=>recommendationCardHtml(r,idx,false)).join('') : '<div style="font-size:12px;color:var(--secondary)">No available recommendations found for this block.</div>';
@@ -3440,7 +3522,7 @@ function renderRecommendationsTab(c) {
     '<button class="btn btn-primary" onclick="openRecommendationPoolModal(null)">+ New Recommendation Pool</button>'+ 
     '<span style="font-size:11px;color:var(--secondary)">'+filtered.length+' pools</span>'+ 
   '</div>'+
-  '<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">These pools power the 💡 recommendation button in the schedule. Edit a pool to change what stakeholders see for that school, format, subject, quarter, or cycle.</div>';
+  '<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">These pools power the recommendation button in the schedule. Edit a pool to change what stakeholders see for that school, format, subject, quarter, or cycle.</div>';
   filtered.forEach(p => {
     const ids = (p.topicIds || []).filter(id=>id);
     h += '<div class="rec-editor-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
@@ -3547,8 +3629,7 @@ function updateBadges(){
   if (tabs[0]) tabs[0].innerHTML='Schedule <span class="badge">'+schedule.length+'</span>';
   if (tabs[1]) tabs[1].innerHTML='Build Tracker <span class="badge">'+active+'</span>';
   if (tabs[2]) tabs[2].innerHTML='Topic Catalogue <span class="badge">'+Object.keys(topics).length+'</span>';
-  if (tabs[3]) tabs[3].innerHTML='Evidence Base <span class="badge">'+evCount+'</span>';
-  if (tabs[4]) tabs[4].innerHTML='Recommendations <span class="badge">'+Object.keys(recommendationPools).length+'</span>';
+  if (tabs[3]) tabs[3].innerHTML='Recommendations <span class="badge">'+Object.keys(recommendationPools).length+'</span>';
 }
 
 initFirebaseAuth();
