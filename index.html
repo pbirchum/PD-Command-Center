@@ -63,6 +63,10 @@ input,textarea,select{font-family:var(--font)}
 .guide-body li{margin-bottom:4px}
 .guide-body strong{color:var(--label)}
 .guide-no-results{color:var(--secondary);font-size:12px;padding:8px 2px}
+.guide-tools{position:sticky;top:91px;background:var(--navy);z-index:3;padding:8px 16px;border-bottom:1px solid var(--card-border)}
+.guide-section-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.guide-section summary .guide-title{flex:1}
+.guide-section-actions .btn{padding:1px 6px;font-size:9px}
 .ref-group{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:6px}
 .ref-group-prefix{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:2px;display:flex;justify-content:space-between;align-items:center}
 .ref-group-name{font-size:11px;color:var(--muted)}
@@ -289,6 +293,9 @@ body.auth-locked #app-shell{pointer-events:none;user-select:none}
       <div class="guide-search-wrap">
         <input id="guide-search" type="search" placeholder="Search the guide..." oninput="filterGuideSections()">
       </div>
+      <div class="guide-tools">
+        <button class="btn btn-sm btn-primary" onclick="openGuideSectionModal(null)" style="width:100%">+ Add Guide Topic</button>
+      </div>
       <div id="guide-content">
         <details class="guide-section" open data-guide="overview purpose stakeholder sharing pd planner command center">
           <summary>What this site is for</summary>
@@ -500,6 +507,89 @@ const firebaseConfig = {
 const DEFAULT_TOPICS = JSON.parse(JSON.stringify(topics));
 const DEFAULT_SCHEDULE = JSON.parse(JSON.stringify(schedule));
 const DEFAULT_TOPIC_GROUPS = JSON.parse(JSON.stringify(topicGroups));
+const DEFAULT_SITE_GUIDE_SECTIONS = Array.from(document.querySelectorAll('#guide-content .guide-section')).map((section, idx) => ({
+  id: section.dataset.id || ('guide-' + (idx + 1)),
+  title: (section.querySelector('summary')?.textContent || 'Guide Topic').trim(),
+  bodyHtml: section.querySelector('.guide-body')?.innerHTML || '',
+  searchTerms: section.dataset.guide || ''
+}));
+let siteGuideSections = JSON.parse(JSON.stringify(DEFAULT_SITE_GUIDE_SECTIONS));
+const DEFAULT_TOPIC_IMPORT_PROMPT = `Create a plain .txt file that contains only valid JSON. Do not include markdown, explanations, comments, headings, code fences, or any text before or after the JSON.
+
+The JSON must be an object with one top-level key: "topics".
+
+The value of "topics" must be an array of topic objects that can be imported into the PD Planner Topic Catalogue.
+
+Use the uploaded/exported PD Planner catalogue or schedule as the source of truth for existing topic IDs, topic groups, naming patterns, and topic style.
+
+Each topic object must include all of these fields:
+
+- "id"
+- "title"
+- "lean"
+- "description"
+- "outcomes"
+- "evidence"
+- "fileLinks"
+
+Use this structure exactly:
+
+{
+  "topics": [
+    {
+      "id": "GROUP-01",
+      "title": "Topic Title",
+      "lean": "Blended",
+      "description": "A complete explanation of what this PD topic covers.",
+      "outcomes": "Teachers leave with a specific artifact, plan, workflow, resource, or classroom-ready application.",
+      "evidence": "The research base, framework, rationale, school need, or instructional reason this topic belongs in the PD plan.",
+      "fileLinks": []
+    }
+  ]
+}
+
+Topic ID rules:
+
+1. Every topic ID must be unique. Do not reuse an ID that already appears in the uploaded/exported catalogue or schedule.
+
+2. When adding a topic to an existing topic group, use that group's existing prefix. For example:
+   - Existing AI Technical topics use IDs like AI-T01, AI-T02, AI-T03.
+   - Existing VR Pedagogical topics use IDs like VR-P01, VR-P02, VR-P03.
+   - Existing Async topics use IDs like AS-01, AS-02, AS-03.
+
+3. Before assigning an ID, look at all existing IDs with the same prefix and choose the next available number in that sequence. For example:
+   - If AI-T01 through AI-T04 already exist, the next new AI Technical topic should be AI-T05.
+   - If VR-P01 through VR-P06 already exist, the next new VR Pedagogical topic should be VR-P07.
+   - If a number is missing, use the first open number only if it is clearly unused.
+
+4. Do not invent a new prefix when an existing group already fits the topic. Use the existing group whenever possible.
+
+5. Only create a new topic group prefix if the new topics clearly do not belong in any existing group. When creating a new group, choose a short, readable prefix and use it consistently across all topics in that group. For example:
+   - DATA-01, DATA-02, DATA-03 for a new Data & Assessment group.
+   - FAM-01, FAM-02, FAM-03 for a new Family Communication group.
+   - LEAD-01, LEAD-02, LEAD-03 for a new Leadership group.
+
+6. If creating a new group, include multiple topics with the same new prefix when appropriate. Do not give every topic a completely unrelated custom prefix.
+
+7. IDs should be short, clean, and consistent. Use uppercase letters, optional hyphens, and two-digit numbering. Good examples: AI-T05, VR-P07, AS-34, DATA-01, FAM-02. Avoid long IDs, spaces, lowercase IDs, or sentence-like IDs.
+
+8. The "lean" value must be exactly one of these:
+   - "Technical"
+   - "Pedagogical"
+   - "Blended"
+
+9. Do not leave any required field blank.
+
+10. Use "fileLinks": [] unless actual file links are provided.
+
+11. If the user provided a schedule export, use it to understand what kinds of topics are needed, which schools or quarters they may support, and which existing topics are already scheduled. Do not duplicate existing topics unless the user specifically asks for variations.
+
+12. If the user provided a topic catalogue export, use it to match the style, level of detail, wording, evidence style, and ID conventions of the existing catalogue.
+
+13. Return only valid JSON. Do not include explanations.
+
+14. Save the final result as a .txt file.`;
+let topicImportPrompt = DEFAULT_TOPIC_IMPORT_PROMPT;
 const recommendationPools = {
   "Lower|live|Q1": {
     "id": "Lower|live|Q1",
@@ -2433,6 +2523,8 @@ async function seedFirestoreIfEmpty() {
       schedule: DEFAULT_SCHEDULE,
       topicGroups: DEFAULT_TOPIC_GROUPS,
       recommendationPools: DEFAULT_RECOMMENDATION_POOLS,
+      siteGuideSections: DEFAULT_SITE_GUIDE_SECTIONS,
+      topicImportPrompt: DEFAULT_TOPIC_IMPORT_PROMPT,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -2445,6 +2537,8 @@ function applyRemoteState(data) {
   replaceObjectContents(topics, data.topics || {});
   replaceArrayContents(schedule, data.schedule || []);
   replaceObjectContents(topicGroups, data.topicGroups || {});
+  replaceArrayContents(siteGuideSections, data.siteGuideSections || DEFAULT_SITE_GUIDE_SECTIONS);
+  topicImportPrompt = typeof data.topicImportPrompt === 'string' ? data.topicImportPrompt : DEFAULT_TOPIC_IMPORT_PROMPT;
   const needsRecommendationPoolBackfill = !data.recommendationPools || Object.keys(data.recommendationPools || {}).length === 0;
   replaceObjectContents(recommendationPools, data.recommendationPools || DEFAULT_RECOMMENDATION_POOLS);
   const poolsNormalized = normalizeRecommendationPoolTopicIds();
@@ -2452,6 +2546,7 @@ function applyRemoteState(data) {
   if ((needsRecommendationPoolBackfill || poolsNormalized) && auth.currentUser) setTimeout(() => saveAllData(), 50);
   hasLoadedRemoteState = true;
   renderRefGroups();
+  renderGuideSections();
   render();
 }
 
@@ -2485,6 +2580,8 @@ async function saveAllData() {
       schedule: cloneForFirestore(schedule),
       topicGroups: cloneForFirestore(topicGroups),
       recommendationPools: cloneForFirestore(recommendationPools),
+      siteGuideSections: cloneForFirestore(siteGuideSections),
+      topicImportPrompt: topicImportPrompt,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: {
         uid: auth.currentUser.uid,
@@ -2663,6 +2760,60 @@ function filterGuideSections() {
     content.appendChild(noResults);
   }
   if (noResults) noResults.classList.toggle('hidden', visible !== 0);
+}
+function renderGuideSections() {
+  const content = document.getElementById('guide-content');
+  if (!content) return;
+  content.innerHTML = siteGuideSections.map((section, idx) =>
+    '<details class="guide-section" '+(idx===0?'open ':'')+'data-id="'+esc(section.id)+'" data-guide="'+esc(section.searchTerms || '')+'">'+
+      '<summary><span class="guide-title">'+esc(section.title)+'</span>'+
+        '<span class="guide-section-actions">'+
+          '<button class="btn btn-sm" onclick="event.preventDefault();event.stopPropagation();openGuideSectionModal('+idx+')">Edit</button>'+
+          '<button class="btn btn-sm btn-danger" onclick="event.preventDefault();event.stopPropagation();deleteGuideSection('+idx+')">Remove</button>'+
+        '</span>'+
+      '</summary>'+
+      '<div class="guide-body">'+(section.bodyHtml || '')+'</div>'+
+    '</details>'
+  ).join('');
+  filterGuideSections();
+}
+function guideTextToHtml(text) {
+  return (text || '').split(/\n\s*\n/).map(p => '<p>'+esc(p.trim()).replace(/\n/g,'<br>')+'</p>').join('');
+}
+function guideHtmlToText(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  return (div.innerText || '').trim();
+}
+function openGuideSectionModal(idx) {
+  const section = idx === null ? null : siteGuideSections[idx];
+  document.getElementById('modal-container').innerHTML = '<div class="modal-overlay"><div class="modal">'+
+    '<h2>'+(section?'Edit Site Guide Topic':'Add Site Guide Topic')+'</h2>'+
+    '<label>Heading</label><input id="guide-edit-title" value="'+esc(section?section.title:'')+'" placeholder="Guide heading">'+
+    '<label>Search Keywords</label><input id="guide-edit-terms" value="'+esc(section?section.searchTerms:'')+'" placeholder="Optional words that should find this guide topic">'+
+    '<label>Text Description</label><textarea id="guide-edit-body" style="min-height:210px">'+esc(section?guideHtmlToText(section.bodyHtml):'')+'</textarea>'+
+    '<div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGuideSection('+(idx===null?'null':idx)+')">Save Guide Topic</button></div>'+
+  '</div></div>';
+}
+function saveGuideSection(idx) {
+  const title = document.getElementById('guide-edit-title').value.trim();
+  if (!title) { alert('Guide heading is required.'); return; }
+  const updated = {
+    id: idx === null ? ('guide-' + Date.now()) : siteGuideSections[idx].id,
+    title,
+    searchTerms: document.getElementById('guide-edit-terms').value.trim(),
+    bodyHtml: guideTextToHtml(document.getElementById('guide-edit-body').value.trim())
+  };
+  if (idx === null) siteGuideSections.push(updated);
+  else siteGuideSections[idx] = updated;
+  closeModal(); renderGuideSections(); saveAllData();
+}
+function deleteGuideSection(idx) {
+  const section = siteGuideSections[idx];
+  if (!section) return;
+  if (!confirm('Remove "'+section.title+'" from the Site Guide?')) return;
+  siteGuideSections.splice(idx, 1);
+  renderGuideSections(); saveAllData();
 }
 function renderRefGroups() {
   const list = document.getElementById('ref-groups-list');
@@ -3441,6 +3592,93 @@ function exportCatalogue() {
   const data = ids.map(id=>topicExportObject(id)).filter(Boolean);
   downloadTextFile('pd-topic-catalogue.txt', JSON.stringify({filters:{id:catIdSearch,text:catSearch,lean:catLean,school:catSchool}, topics:data}, null, 2));
 }
+function normalizeImportedTopic(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = String(raw.id || raw.ID || raw.topicId || raw.topicID || '').trim();
+  const title = String(raw.title || raw.Title || '').trim();
+  const lean = String(raw.lean || raw.Lean || 'Blended').trim();
+  const description = String(raw.description || raw.Description || '').trim();
+  const outcomes = String(raw.outcomes || raw.learningOutcomes || raw['Learning Outcomes'] || raw.learning_outcomes || '').trim();
+  const evidence = String(raw.evidence || raw.evidenceBase || raw['Evidence Base'] || raw.evidence_base || '').trim();
+  if (!id || !title || !description || !outcomes || !evidence) return null;
+  return {
+    id, title,
+    lean: ['Technical','Pedagogical','Blended'].includes(lean) ? lean : 'Blended',
+    description, outcomes, evidence,
+    fileLinks: Array.isArray(raw.fileLinks) ? raw.fileLinks : []
+  };
+}
+function topicsFromImportText(text) {
+  const parsed = JSON.parse(text);
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed.topics)) return parsed.topics;
+  if (parsed.id || parsed.topicId || parsed.topicID) return [parsed];
+  return [];
+}
+function importTopicCatalogueFile(event) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const rawTopics = topicsFromImportText(String(reader.result || ''));
+      const imported = rawTopics.map(normalizeImportedTopic).filter(Boolean);
+      if (!imported.length) {
+        alert('No complete topics were found. Each imported topic needs id, title, lean, description, learningOutcomes, and evidenceBase fields.');
+        input.value = '';
+        return;
+      }
+      const duplicates = imported.filter(t => topics[t.id]).map(t => t.id);
+      if (duplicates.length && !confirm('This import includes existing topic IDs: '+duplicates.join(', ')+'. Importing will update those topics. Continue?')) {
+        input.value = '';
+        return;
+      }
+      imported.forEach(t => { topics[t.id] = t; });
+      render(); renderRefGroups(); saveAllData();
+      alert('Imported '+imported.length+' topic'+(imported.length===1?'':'s')+' into the Topic Catalogue.');
+    } catch (err) {
+      alert('The import file could not be read. Please use a .txt file containing JSON from Export Catalogue or a JSON object with a topics array.');
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+function openTopicImportPromptModal() {
+  document.getElementById('modal-container').innerHTML = '<div class="modal-overlay"><div class="modal">'+
+    '<h2>Topic Import Prompt</h2>'+
+    '<label>LLM Instructions</label><textarea id="topic-import-prompt-edit" style="min-height:360px">'+esc(topicImportPrompt || DEFAULT_TOPIC_IMPORT_PROMPT)+'</textarea>'+
+    '<div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn" onclick="copyTopicImportPrompt()">Copy to Clipboard</button><button class="btn btn-primary" onclick="saveTopicImportPrompt()">Save Prompt</button></div>'+
+  '</div></div>';
+}
+function saveTopicImportPrompt() {
+  const promptBox = document.getElementById('topic-import-prompt-edit');
+  topicImportPrompt = promptBox ? promptBox.value : topicImportPrompt;
+  closeModal();
+  saveAllData();
+}
+function copyTopicImportPrompt() {
+  const promptBox = document.getElementById('topic-import-prompt-edit');
+  const text = promptBox ? promptBox.value : (topicImportPrompt || DEFAULT_TOPIC_IMPORT_PROMPT);
+  const done = () => alert('Topic import prompt copied to clipboard.');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopyText(text, done));
+  } else {
+    fallbackCopyText(text, done);
+  }
+}
+function fallbackCopyText(text, callback) {
+  const temp = document.createElement('textarea');
+  temp.value = text;
+  temp.setAttribute('readonly', '');
+  temp.style.position = 'fixed';
+  temp.style.left = '-9999px';
+  document.body.appendChild(temp);
+  temp.select();
+  try { document.execCommand('copy'); if (callback) callback(); }
+  finally { document.body.removeChild(temp); }
+}
 
 // ════════════════════════════════
 // CATALOGUE
@@ -3498,6 +3736,9 @@ function renderCatalogue(c) {
       '<option value="All Schools"'+(catSchool==='All Schools'?' selected':'')+'>All Schools Only</option>'+
     '</select>'+
     '<button class="btn btn-sm" onclick="exportCatalogue()">Export Catalogue</button>'+
+    '<button class="btn btn-sm" onclick="openTopicImportPromptModal()">Import Prompt</button>'+
+    '<button class="btn btn-sm btn-primary" onclick="document.getElementById(\'topic-import-file\').click()">Import Topics</button>'+
+    '<input id="topic-import-file" type="file" accept=".txt,.json,text/plain,application/json" class="hidden" onchange="importTopicCatalogueFile(event)">'+
     '<span id="cat-count" style="font-size:11px;color:var(--secondary)"></span>'+
   '</div>';
 
