@@ -16,7 +16,7 @@
   --fmt-newt:#F4B942;--fmt-k2ob:#ED7D6A;--fmt-special:#FFD966;--fmt-nopd:#7f8c8d;
   --stage-planning:#e74c3c;--stage-inbuild:#e67e22;--stage-review:#f1c40f;
   --stage-ready:#82c91e;--stage-delivered:#3498db;
-  --ref-width:280px;
+  --ref-width:280px;--guide-width:360px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--navy-deep);color:var(--white);min-height:100vh}
@@ -40,6 +40,29 @@ input,textarea,select{font-family:var(--font)}
 #ref-panel h3{color:var(--cyan);font-size:13px;font-weight:700;margin:0 0 12px 0;padding:16px 16px 10px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--navy);z-index:5;border-bottom:1px solid var(--card-border)}
 #ref-groups-list{padding:0 16px}
 #ref-panel-inner>div:last-child{padding-left:16px!important;padding-right:16px!important}
+
+/* ── Site Guide Panel ── */
+#guide-panel{
+  width:0;height:100vh;overflow:hidden;background:var(--navy);border-left:1px solid var(--card-border);
+  transition:width .25s;flex-shrink:0;display:flex;flex-direction:column;
+}
+#guide-panel.open{width:var(--guide-width)}
+#guide-panel-inner{width:var(--guide-width);height:100vh;padding:0;overflow-y:auto;overflow-x:hidden;flex:1}
+#guide-panel h3{color:var(--cyan);font-size:13px;font-weight:700;margin:0;padding:16px 16px 10px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--navy);z-index:5;border-bottom:1px solid var(--card-border)}
+.guide-search-wrap{position:sticky;top:44px;background:var(--navy);z-index:4;padding:10px 16px;border-bottom:1px solid var(--card-border)}
+#guide-search{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);color:var(--white);font-size:12px}
+#guide-content{padding:10px 16px 18px}
+.guide-section{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);margin-bottom:7px;overflow:hidden}
+.guide-section summary{list-style:none;cursor:pointer;padding:9px 10px;color:var(--cyan);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.guide-section summary::-webkit-details-marker{display:none}
+.guide-section summary:after{content:'+';color:var(--muted);font-size:14px;font-weight:700}
+.guide-section[open] summary:after{content:'–'}
+.guide-body{border-top:1px solid var(--card-border);padding:9px 10px;color:var(--muted);font-size:11px;line-height:1.45}
+.guide-body p{margin:0 0 7px 0}
+.guide-body ul{margin:0 0 7px 16px}
+.guide-body li{margin-bottom:4px}
+.guide-body strong{color:var(--label)}
+.guide-no-results{color:var(--secondary);font-size:12px;padding:8px 2px}
 .ref-group{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:6px}
 .ref-group-prefix{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:2px;display:flex;justify-content:space-between;align-items:center}
 .ref-group-name{font-size:11px;color:var(--muted)}
@@ -246,6 +269,7 @@ body.auth-locked #app-shell{pointer-events:none;user-select:none}
       </div>
       <div class="header-actions">
         <button class="btn btn-ref" id="ref-btn" onclick="toggleRefPanel()">📖 Group Key</button>
+        <button class="btn btn-ref" id="guide-btn" onclick="toggleGuidePanel()">❔ Site Guide</button>
         <button class="btn btn-primary" onclick="openTopicModal(null)">+ New Topic</button>
       </div>
     </div>
@@ -256,6 +280,163 @@ body.auth-locked #app-shell{pointer-events:none;user-select:none}
       <button class="nav-tab" data-tab="recommendations">Recommendations</button>
     </div>
     <div class="main" id="main-content"></div>
+  </div>
+
+  <!-- Site Guide Panel (pushes content from the right) -->
+  <div id="guide-panel">
+    <div id="guide-panel-inner">
+      <h3>Site Guide <button class="btn btn-sm" onclick="toggleGuidePanel()" style="padding:2px 7px;font-size:10px">✕</button></h3>
+      <div class="guide-search-wrap">
+        <input id="guide-search" type="search" placeholder="Search the guide..." oninput="filterGuideSections()">
+      </div>
+      <div id="guide-content">
+        <details class="guide-section" open data-guide="overview purpose stakeholder sharing pd planner command center">
+          <summary>What this site is for</summary>
+          <div class="guide-body">
+            <p>This site is the PD Planner Tool for planning professional development across the OptimaAcademy Online network of schools.</p>
+            <p>It brings the yearlong PD schedule, build status, topic catalogue, recommendation pools, topic groups, links, notes, and planning evidence into one shared planning board.</p>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="sign in authentication microsoft locked access firestore shared save live updates">
+          <summary>Sign-in and shared access</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Microsoft sign-in:</strong> users must sign in before the site can be used.</li>
+              <li><strong>Shared data:</strong> changes save to Firestore and can update live for other signed-in users.</li>
+              <li><strong>Sign out:</strong> the sign-out button appears in the top header after sign-in.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="top buttons header new topic group key site guide sign out">
+          <summary>Top-right buttons</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Group Key:</strong> opens the left reference panel showing topic ID prefixes and what each group means.</li>
+              <li><strong>Site Guide:</strong> opens this right-side searchable guide while the rest of the site remains usable.</li>
+              <li><strong>+ New Topic:</strong> opens the topic editor to create a new PD topic.</li>
+              <li><strong>Sign out:</strong> signs the current Microsoft user out of the planner.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="tabs schedule build tracker topic catalogue recommendations navigation">
+          <summary>Main navigation tabs</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Schedule:</strong> the master calendar view for PD weeks, schools, session types, topics, and recommendations.</li>
+              <li><strong>Build Tracker:</strong> a Kanban-style board for moving scheduled PD work through production stages.</li>
+              <li><strong>Topic Catalogue:</strong> the searchable topic database with descriptions, outcomes, and evidence.</li>
+              <li><strong>Recommendations:</strong> editable recommendation pools used by the schedule helper buttons.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="schedule week date school columns filters quarter school topic pool drag drop assigned unassigned">
+          <summary>Schedule tab</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Week/date rows:</strong> each row represents a PD week or special schoolwide event.</li>
+              <li><strong>School columns:</strong> show which school or teacher group has PD that week.</li>
+              <li><strong>Session type labels:</strong> identify Live, Subject Live, Async, onboarding, showcase, conference, party, and closeout slots.</li>
+              <li><strong>Topic tags:</strong> colored topic IDs assigned to a schedule slot. Click a topic tag to open its details.</li>
+              <li><strong>Topic Pool:</strong> draggable topic tags that can be filtered by Live, Subject, Async, or All.</li>
+              <li><strong>Drag and drop:</strong> drag a topic from the pool or from one slot into another schedule slot.</li>
+              <li><strong>Remove X:</strong> the red X appears when hovering over a scheduled topic and removes that topic from that slot.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="recommend topics helper button sparkle suggestion slot recommendations schedule">
+          <summary>Recommendation helper buttons</summary>
+          <div class="guide-body">
+            <p>The small recommendation button in a schedule slot opens suggested topics for that school, session family, quarter, subject, or audience.</p>
+            <p>Use it when a slot is empty or when stakeholders want to understand which PD options were planned for that type of session.</p>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="build tracker kanban stages planning in build review ready delivered cards status drag notes links">
+          <summary>Build Tracker tab</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Stage columns:</strong> Planning, In Build, Review, Ready, and Delivered.</li>
+              <li><strong>Cards:</strong> each card represents a scheduled PD slot with assigned topics.</li>
+              <li><strong>Drag cards:</strong> move cards between stage columns to update production status.</li>
+              <li><strong>Card details:</strong> cards can show school, session type, week, topic, links, and notes.</li>
+              <li><strong>Click a card:</strong> opens the schedule/session editor for that PD slot.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="topic catalogue topics ids title lean technical pedagogical blended description outcomes evidence search edit">
+          <summary>Topic Catalogue tab</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>ID:</strong> the short code used everywhere else in the planner.</li>
+              <li><strong>Title:</strong> the full PD topic name.</li>
+              <li><strong>Lean:</strong> marks the topic as Technical, Pedagogical, or Blended.</li>
+              <li><strong>Description:</strong> explains what the PD session is about.</li>
+              <li><strong>Outcomes:</strong> names what teachers should leave with.</li>
+              <li><strong>Evidence:</strong> captures the research or rationale behind the topic.</li>
+              <li><strong>Click topic IDs:</strong> opens the editable topic detail modal.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="recommendations tab pools school family quarter subject audience cycle rationale add edit pool topic ids">
+          <summary>Recommendations tab</summary>
+          <div class="guide-body">
+            <p>Recommendation pools are reusable sets of suggested topics. They support the schedule helper button and help explain why certain topics fit certain PD slots.</p>
+            <ul>
+              <li><strong>Pool label:</strong> names the recommendation context.</li>
+              <li><strong>School/family/quarter fields:</strong> connect the pool to matching schedule slots.</li>
+              <li><strong>Items/topic IDs:</strong> the topics suggested for that context.</li>
+              <li><strong>Rationale:</strong> explains the planning reason behind the pool.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="group key prefixes colors live subject async add group edit delete counts left panel">
+          <summary>Group Key panel</summary>
+          <div class="guide-body">
+            <p>The left Group Key panel explains topic ID prefixes, such as VR-T, AI-P, LOW, K1, G4, G5, and AS.</p>
+            <p>Each group shows its prefix, name, format type, topic count, and description. The Add Group button creates a new prefix group.</p>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="topic editor modal new topic edit topic description outcomes evidence used by placement links notes save delete">
+          <summary>Topic and session editors</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Topic editor:</strong> create or edit topic ID, title, lean, description, outcomes, and evidence.</li>
+              <li><strong>Used by:</strong> shows where a topic appears in the current schedule.</li>
+              <li><strong>Session editor:</strong> edit scheduled slot details, assigned topics, notes, and file links.</li>
+              <li><strong>File links:</strong> attach URLs to planning docs, PD materials, recordings, or supporting resources.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="colors badges legend live subject async lean stage dots status planning delivered">
+          <summary>Colors, badges, and labels</summary>
+          <div class="guide-body">
+            <ul>
+              <li><strong>Blue/cyan topic tags:</strong> Live or technical-style PD topics.</li>
+              <li><strong>Green topic tags:</strong> Subject or school-specific PD topics.</li>
+              <li><strong>Purple topic tags:</strong> Async self-paced modules.</li>
+              <li><strong>Lean badges:</strong> Technical, Pedagogical, and Blended describe the instructional focus of a topic.</li>
+              <li><strong>Stage dots/status:</strong> show where a session is in the build process.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="export current view filters txt descriptions schedule active filters stakeholders llm">
+          <summary>Export Current View</summary>
+          <div class="guide-body">
+            <p>Export Current View creates a text export of the schedule view currently being shown, respecting active filters. It is useful for sharing with stakeholders or pasting into an LLM for analysis.</p>
+            <p>The export includes the currently visible schedule information and the descriptions of topics currently within that schedule view.</p>
+          </div>
+        </details>
+        <details class="guide-section" data-guide="search guide faq collapsible headings present while navigating right side panel">
+          <summary>How to use this guide</summary>
+          <div class="guide-body">
+            <ul>
+              <li>Type in the search box to narrow the guide to matching headings and keywords.</li>
+              <li>Open or close headings to read only the section you need.</li>
+              <li>Leave the guide open while clicking tabs, opening topic details, or reviewing the schedule.</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2452,6 +2633,36 @@ function toggleRefPanel() {
   document.getElementById('ref-panel').classList.toggle('open', refOpen);
   document.getElementById('ref-btn').classList.toggle('active', refOpen);
   renderRefGroups();
+}
+
+let guideOpen = false;
+function toggleGuidePanel() {
+  guideOpen = !guideOpen;
+  document.getElementById('guide-panel').classList.toggle('open', guideOpen);
+  document.getElementById('guide-btn').classList.toggle('active', guideOpen);
+  if (guideOpen) filterGuideSections();
+}
+function filterGuideSections() {
+  const input = document.getElementById('guide-search');
+  const term = input ? input.value.trim().toLowerCase() : '';
+  const sections = document.querySelectorAll('.guide-section');
+  let visible = 0;
+  sections.forEach(section => {
+    const haystack = (section.textContent + ' ' + (section.dataset.guide || '')).toLowerCase();
+    const match = !term || haystack.includes(term);
+    section.classList.toggle('hidden', !match);
+    if (match) visible++;
+  });
+  let noResults = document.getElementById('guide-no-results');
+  const content = document.getElementById('guide-content');
+  if (!noResults && content) {
+    noResults = document.createElement('div');
+    noResults.id = 'guide-no-results';
+    noResults.className = 'guide-no-results hidden';
+    noResults.textContent = 'No guide sections match that search.';
+    content.appendChild(noResults);
+  }
+  if (noResults) noResults.classList.toggle('hidden', visible !== 0);
 }
 function renderRefGroups() {
   const list = document.getElementById('ref-groups-list');
